@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import Card from './components/Card.vue'
 import Verb from './components/Verb.vue'
 
@@ -45,11 +45,64 @@ const selectedVerbId = ref(null)
 const highlightedVerbs = ref(new Set())
 
 // 7. Drawer state - iOS style bottom sheet
-const drawerOpenHeight = ref(280) // Open height in px
+const drawerOpenHeight = ref(380) // Open height in px (increased for search + tabs)
 const drawerClosedHeight = ref(64) // Closed height (handle only)
 const isDrawerOpen = ref(false)
 const isDraggingDrawer = ref(false)
 const drawerDragStart = ref({ y: 0, height: 0 })
+
+// 8. Drawer search and filter
+const drawerSearchQuery = ref('')
+const drawerActiveTab = ref('all') // 'all', 'dynamic', 'static', 'secret', 'nemesis', 'verbs'
+
+const toggleDrawer = () => {
+  isDrawerOpen.value = !isDrawerOpen.value
+}
+
+// Filter cards based on search and tab
+const filteredDrawerCards = computed(() => {
+  let cards = [...drawerCards.value]
+  
+  // Filter by type tab
+  if (drawerActiveTab.value !== 'all' && drawerActiveTab.value !== 'verbs') {
+    cards = cards.filter(c => c.type === drawerActiveTab.value)
+  }
+  
+  // Filter by search query
+  if (drawerSearchQuery.value.trim()) {
+    const query = drawerSearchQuery.value.toLowerCase().trim()
+    cards = cards.filter(c => 
+      c.label.toLowerCase().includes(query) ||
+      c.aspects.some(a => a.toLowerCase().includes(query))
+    )
+  }
+  
+  return cards
+})
+
+// Get all verbs for drawer display
+const allVerbs = computed(() => {
+  let verbs = [...verbs.value]
+  
+  // Filter by search query
+  if (drawerSearchQuery.value.trim()) {
+    const query = drawerSearchQuery.value.toLowerCase().trim()
+    verbs = verbs.filter(v => 
+      v.label.toLowerCase().includes(query) ||
+      v.requiredAspects.some(a => a.toLowerCase().includes(query))
+    )
+  }
+  
+  // Filter by type tab
+  if (drawerActiveTab.value === 'verbs') {
+    return verbs
+  } else if (drawerActiveTab.value !== 'all') {
+    // For resource tabs, don't show verbs
+    return []
+  }
+  
+  return verbs
+})
 
 const toggleDrawer = () => {
   isDrawerOpen.value = !isDrawerOpen.value
@@ -837,7 +890,7 @@ const igniteVerb = (verbId) => {
 
     <!-- Bottom Panel: iOS-style Drawer -->
     <footer 
-      class="fixed bottom-0 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 z-30 transition-all duration-300 ease-out overflow-hidden"
+      class="fixed bottom-0 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 z-30 transition-all duration-300 ease-out overflow-hidden flex flex-col"
       :style="{ 
         height: isDrawerOpen ? `${drawerOpenHeight}px` : `${drawerClosedHeight}px`,
         maxWidth: 'calc(100vw - 128px)',
@@ -849,7 +902,7 @@ const igniteVerb = (verbId) => {
     >
       <!-- Handle bar (always visible) -->
       <div 
-        class="w-full h-6 flex items-center justify-center cursor-pointer"
+        class="w-full h-6 flex items-center justify-center cursor-pointer flex-shrink-0"
         @mousedown="startDrawerDrag"
         @touchstart="startDrawerDrag"
         @click="toggleDrawer"
@@ -859,22 +912,79 @@ const igniteVerb = (verbId) => {
       
       <!-- Drawer content (only visible when open) -->
       <div 
-        class="px-4 pb-4 overflow-y-auto transition-opacity duration-300"
+        class="flex-1 flex flex-col overflow-hidden px-4 pb-4"
         :class="isDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'"
       >
-        <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-4">Resource Drawer (Your Hand)</h2>
-        <div class="flex gap-4 overflow-x-auto pb-4 min-h-[120px]">
-          <div 
-            v-for="card in drawerCards" 
-            :key="card.id" 
-            class="w-48 shrink-0 transition-all hover:-translate-y-2 cursor-grab active:cursor-grabbing"
-            :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && draggedItem.originalCard.id === card.id }"
-            @mousedown.stop="startDraggingCard(card, $event)"
+        <!-- Search box -->
+        <div class="mb-3 flex-shrink-0">
+          <input 
+            v-model="drawerSearchQuery"
+            type="text"
+            placeholder="Search cards and verbs..."
+            class="w-full bg-zinc-900/50 border border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-orange-400/50 focus:ring-1 focus:ring-orange-400/50 transition-all"
+          />
+        </div>
+        
+        <!-- Type tabs -->
+        <div class="mb-3 flex-shrink-0 flex gap-2 overflow-x-auto pb-1">
+          <button
+            v-for="tab in ['all', 'dynamic', 'static', 'secret', 'nemesis', 'verbs']"
+            :key="tab"
+            @click="drawerActiveTab = tab"
+            class="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all"
+            :class="drawerActiveTab === tab 
+              ? 'bg-orange-500 text-white' 
+              : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'"
           >
-            <Card :card="card" :is-selected="selectedCardId === card.id" @select="onCardSelect" />
-          </div>
-          <div v-if="drawerCards.length === 0" class="h-full w-full flex items-center justify-center text-zinc-600 text-sm italic">
-            Drawer is empty...
+            {{ tab === 'all' ? 'All' : tab.charAt(0).toUpperCase() + tab.slice(1) }}
+            <span class="ml-1 opacity-60">
+              {{ tab === 'verbs' ? allVerbs.length : tab === 'all' ? drawerCards.length : filteredDrawerCards.length }}
+            </span>
+          </button>
+        </div>
+        
+        <!-- Cards and verbs grid -->
+        <div class="flex-1 overflow-y-auto min-h-0">
+          <div class="flex gap-4 pb-2">
+            <!-- Resource cards -->
+            <template v-if="drawerActiveTab !== 'verbs'">
+              <div 
+                v-for="card in filteredDrawerCards" 
+                :key="card.id" 
+                class="w-48 shrink-0 transition-all hover:-translate-y-1 cursor-grab active:cursor-grabbing"
+                :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && draggedItem.originalCard.id === card.id }"
+                @mousedown.stop="startDraggingCard(card, $event)"
+              >
+                <Card :card="card" :is-selected="selectedCardId === card.id" @select="onCardSelect" />
+              </div>
+              <div v-if="filteredDrawerCards.length === 0" class="h-32 w-full flex items-center justify-center text-zinc-600 text-sm italic">
+                {{ drawerSearchQuery ? 'No matching cards' : 'No cards in this category' }}
+              </div>
+            </template>
+            
+            <!-- Verbs -->
+            <template v-if="drawerActiveTab === 'verbs' || drawerActiveTab === 'all'">
+              <div 
+                v-for="verb in allVerbs" 
+                :key="verb.id" 
+                class="w-48 shrink-0 cursor-grab active:cursor-grabbing"
+                @mousedown.stop="startDraggingVerb(verb, $event)"
+              >
+                <Verb 
+                  :verb="verb" 
+                  :slottedCards="slottedCards[verb.id]"
+                  :is-selected="selectedVerbId === verb.id"
+                  @select="onVerbSelect"
+                >
+                  <template #slotted-card="{ card }">
+                    <Card :card="card" isSlot :isLocked="verb.state === 'IGNITED'" class="scale-90" />
+                  </template>
+                </Verb>
+              </div>
+              <div v-if="drawerActiveTab === 'verbs' && allVerbs.length === 0" class="h-32 w-full flex items-center justify-center text-zinc-600 text-sm italic">
+                {{ drawerSearchQuery ? 'No matching verbs' : 'No verbs' }}
+              </div>
+            </template>
           </div>
         </div>
       </div>
