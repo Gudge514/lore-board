@@ -83,6 +83,13 @@ const filteredDrawerCards = computed(() => {
   return cards
 })
 
+// Get card count by type (for tab badges, not affected by search)
+const getCardCountByType = (type) => {
+  if (type === 'all') return drawerCards.value.length
+  if (type === 'verbs') return allVerbs.value.length
+  return drawerCards.value.filter(c => c.type === type).length
+}
+
 // Get all verbs for drawer display
 const allVerbs = computed(() => {
   let verbList = [...verbs.value]
@@ -989,7 +996,7 @@ const igniteVerb = (verbId) => {
           >
             {{ tab === 'all' ? 'All' : tab.charAt(0).toUpperCase() + tab.slice(1) }}
             <span class="ml-1 opacity-60">
-              {{ tab === 'verbs' ? allVerbs.length : tab === 'all' ? drawerCards.length : filteredDrawerCards.length }}
+              {{ getCardCountByType(tab) }}
             </span>
           </button>
         </div>
