@@ -90,11 +90,11 @@ const getCardCountByType = (type) => {
   return drawerCards.value.filter(c => c.type === type).length
 }
 
-// Get all verbs for drawer display
+// Get all verbs for drawer display (always returns all verbs, filtering done in template)
 const allVerbs = computed(() => {
   let verbList = [...verbs.value]
   
-  // Filter by search query
+  // Filter by search query (always apply search)
   if (drawerSearchQuery.value.trim()) {
     const query = drawerSearchQuery.value.toLowerCase().trim()
     verbList = verbList.filter(v => 
@@ -103,15 +103,15 @@ const allVerbs = computed(() => {
     )
   }
   
-  // Filter by type tab
-  if (drawerActiveTab.value === 'verbs') {
-    return verbList
-  } else if (drawerActiveTab.value !== 'all') {
-    // For resource tabs, don't show verbs
-    return []
-  }
-  
   return verbList
+})
+
+// Get verbs for display based on active tab
+const displayVerbs = computed(() => {
+  if (drawerActiveTab.value === 'verbs' || drawerActiveTab.value === 'all') {
+    return allVerbs.value
+  }
+  return []
 })
 
 const startDrawerDrag = (event) => {
@@ -1021,9 +1021,9 @@ const igniteVerb = (verbId) => {
             </template>
             
             <!-- Verbs -->
-            <template v-if="drawerActiveTab === 'verbs' || drawerActiveTab === 'all'">
+            <template v-if="displayVerbs.length > 0">
               <div 
-                v-for="verb in allVerbs" 
+                v-for="verb in displayVerbs" 
                 :key="verb.id" 
                 class="w-48 shrink-0 cursor-grab active:cursor-grabbing"
                 @mousedown.stop="startDraggingVerb(verb, $event)"
@@ -1039,10 +1039,10 @@ const igniteVerb = (verbId) => {
                   </template>
                 </Verb>
               </div>
-              <div v-if="drawerActiveTab === 'verbs' && allVerbs.length === 0" class="h-32 w-full flex items-center justify-center text-zinc-600 text-sm italic">
-                {{ drawerSearchQuery ? 'No matching verbs' : 'No verbs' }}
-              </div>
             </template>
+            <div v-if="drawerActiveTab === 'verbs' && displayVerbs.length === 0" class="h-32 w-full flex items-center justify-center text-zinc-600 text-sm italic">
+              {{ drawerSearchQuery ? 'No matching verbs' : 'No verbs' }}
+            </div>
           </div>
         </div>
       </div>
