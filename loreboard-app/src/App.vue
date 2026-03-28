@@ -839,12 +839,12 @@ const igniteVerb = (verbId) => {
     >
       <!-- Handle bar (always visible) -->
       <div 
-        class="w-full h-6 flex items-center justify-center cursor-pointer hover:bg-zinc-800/50 transition-colors"
+        class="w-full h-6 flex items-center justify-center cursor-pointer"
         @mousedown="startDrawerDrag"
         @touchstart="startDrawerDrag"
         @click="toggleDrawer"
       >
-        <div class="w-10 h-1 bg-zinc-600 rounded-full"></div>
+        <div class="w-32 h-1 bg-zinc-600 rounded-full"></div>
       </div>
       
       <!-- Drawer content (only visible when open) -->
