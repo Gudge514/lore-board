@@ -268,10 +268,11 @@ const startDraggingVerb = (verb, event) => {
 }
 
 
-// --- Canvas Panning ---
+// --- Canvas Panning & Zoom ---
 const panOffset = ref({ x: 0, y: 0 })
 const isPanning = ref(false)
 const panStart = ref({ x: 0, y: 0 })
+const zoomLevel = ref(1)
 
 const startPanning = (event) => {
   // Only pan on middle-click or ctrl+click
@@ -298,6 +299,29 @@ const onPanMove = (event) => {
 const onPanEnd = () => {
   isPanning.value = false
   window.removeEventListener('mousemove', onPanMove)
+}
+
+const onZoom = (event) => {
+  // Prevent page scroll
+  event.preventDefault()
+  
+  const zoomSensitivity = 0.001
+  const delta = -event.deltaY * zoomSensitivity
+  const newZoom = Math.min(Math.max(0.5, zoomLevel.value + delta), 2)
+  
+  // Zoom towards mouse position
+  const rect = event.currentTarget.getBoundingClientRect()
+  const mouseX = event.clientX - rect.left
+  const mouseY = event.clientY - rect.top
+  
+  // Calculate offset adjustment to zoom towards mouse
+  const scaleChange = newZoom / zoomLevel.value
+  panOffset.value = {
+    x: mouseX - (mouseX - panOffset.value.x) * scaleChange,
+    y: mouseY - (mouseY - panOffset.value.y) * scaleChange
+  }
+  
+  zoomLevel.value = newZoom
 }
 
 // Drawer state for resize
@@ -517,12 +541,21 @@ const igniteVerb = (verbId) => {
         <div class="absolute inset-0 opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC41Ii8+PC9zdmc+')] pointer-events-none"></div>
         
         <h2 class="absolute top-4 left-6 text-xs uppercase tracking-widest text-zinc-600 font-bold">The Tabletop</h2>
+        
+        <!-- Zoom indicator -->
+        <div class="absolute top-4 right-4 text-xs text-zinc-500 bg-zinc-900/80 px-3 py-1 rounded-full border border-zinc-700/50 backdrop-blur-sm">
+          {{ Math.round(zoomLevel * 100) }}%
+        </div>
 
         <!-- Render dropped cards and verbs on tabletop with absolute positioning -->
         <div 
-          class="relative w-full h-full"
-          :style="{ transform: `translate(${panOffset.x}px, ${panOffset.y}px)` }"
+          class="relative w-full h-full origin-top-left"
+          :style="{ 
+            transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})`,
+            transition: isPanning ? 'none' : 'transform 0.1s ease-out'
+          }"
           @mousedown="startPanning"
+          @wheel="onZoom"
         >
           <!-- Verbs as draggable elements on canvas -->
           <div 
