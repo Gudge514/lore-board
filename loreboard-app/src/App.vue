@@ -44,6 +44,53 @@ const selectedVerbId = ref(null)
 // 6. Drag highlight state - highlight valid verb slots during drag
 const highlightedVerbs = ref(new Set())
 
+// 7. Drawer state - iOS style bottom sheet
+const drawerOpenHeight = ref(280) // Open height in px
+const drawerClosedHeight = ref(64) // Closed height (handle only)
+const isDrawerOpen = ref(false)
+const isDraggingDrawer = ref(false)
+const drawerDragStart = ref({ y: 0, height: 0 })
+
+const toggleDrawer = () => {
+  isDrawerOpen.value = !isDrawerOpen.value
+}
+
+const startDrawerDrag = (event) => {
+  isDraggingDrawer.value = true
+  drawerDragStart.value = {
+    y: event.clientY || event.touches?.[0]?.clientY || 0,
+    height: isDrawerOpen.value ? drawerOpenHeight.value : drawerClosedHeight.value
+  }
+  
+  window.addEventListener('mousemove', onDrawerDrag, { passive: true })
+  window.addEventListener('mouseup', onDrawerDragEnd, { once: true })
+  window.addEventListener('touchmove', onDrawerDrag, { passive: true })
+  window.addEventListener('touchend', onDrawerDragEnd, { once: true })
+}
+
+const onDrawerDrag = (event) => {
+  if (!isDraggingDrawer.value) return
+  
+  const clientY = event.clientY || event.touches?.[0]?.clientY || 0
+  const deltaY = drawerDragStart.value.y - clientY // Positive = dragging up
+  
+  let newHeight = drawerDragStart.value.height + deltaY
+  newHeight = Math.max(drawerClosedHeight.value, Math.min(400, newHeight))
+  
+  // Determine if drawer should be open or closed based on height
+  isDrawerOpen.value = newHeight > drawerClosedHeight.value + 20
+  
+  if (isDrawerOpen.value) {
+    drawerOpenHeight.value = newHeight
+  }
+}
+
+const onDrawerDragEnd = () => {
+  isDraggingDrawer.value = false
+  window.removeEventListener('mousemove', onDrawerDrag)
+  window.removeEventListener('touchmove', onDrawerDrag)
+}
+
 const onCardSelect = ({ cardId }) => {
   // Deselect verb when selecting card
   selectedVerbId.value = null
@@ -778,21 +825,47 @@ const igniteVerb = (verbId) => {
 
     </main>
 
-    <!-- Bottom Panel: The Drawer -->
-    <footer class="h-48 border-t border-zinc-800 bg-zinc-950 p-4 z-20">
-      <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-4">Resource Drawer (Your Hand)</h2>
-      <div class="flex gap-4 overflow-x-auto pb-4 h-full items-start">
-        <div 
-          v-for="card in drawerCards" 
-          :key="card.id" 
-          class="w-48 shrink-0 transition-all hover:-translate-y-2 cursor-grab active:cursor-grabbing"
-          :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && draggedItem.originalCard.id === card.id }"
-          @mousedown.stop="startDraggingCard(card, $event)"
-        >
-          <Card :card="card" :is-selected="selectedCardId === card.id" @select="onCardSelect" />
-        </div>
-        <div v-if="drawerCards.length === 0" class="h-full w-full flex items-center justify-center text-zinc-600 text-sm italic">
-          Drawer is empty...
+    <!-- Bottom Panel: iOS-style Drawer -->
+    <footer 
+      class="fixed bottom-0 left-0 right-0 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 z-30 transition-all duration-300 ease-out overflow-hidden"
+      :style="{ 
+        height: isDrawerOpen ? `${drawerOpenHeight}px` : `${drawerClosedHeight}px`,
+        maxWidth: 'calc(100vw - 32px)',
+        width: 'calc(100vw - 32px)',
+        left: '16px',
+        right: '16px',
+        borderRadius: isDrawerOpen ? '16px 16px 0 0' : '16px 16px 0 0'
+      }"
+    >
+      <!-- Handle bar (always visible) -->
+      <div 
+        class="w-full h-6 flex items-center justify-center cursor-pointer hover:bg-zinc-800/50 transition-colors"
+        @mousedown="startDrawerDrag"
+        @touchstart="startDrawerDrag"
+        @click="toggleDrawer"
+      >
+        <div class="w-10 h-1 bg-zinc-600 rounded-full"></div>
+      </div>
+      
+      <!-- Drawer content (only visible when open) -->
+      <div 
+        class="px-4 pb-4 overflow-y-auto transition-opacity duration-300"
+        :class="isDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+      >
+        <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-4">Resource Drawer (Your Hand)</h2>
+        <div class="flex gap-4 overflow-x-auto pb-4 min-h-[120px]">
+          <div 
+            v-for="card in drawerCards" 
+            :key="card.id" 
+            class="w-48 shrink-0 transition-all hover:-translate-y-2 cursor-grab active:cursor-grabbing"
+            :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && draggedItem.originalCard.id === card.id }"
+            @mousedown.stop="startDraggingCard(card, $event)"
+          >
+            <Card :card="card" :is-selected="selectedCardId === card.id" @select="onCardSelect" />
+          </div>
+          <div v-if="drawerCards.length === 0" class="h-full w-full flex items-center justify-center text-zinc-600 text-sm italic">
+            Drawer is empty...
+          </div>
         </div>
       </div>
     </footer>
