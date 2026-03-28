@@ -757,9 +757,6 @@ const igniteVerb = (verbId) => {
         @dragover.prevent
         @drop="handleCanvasDrop"
       >
-        <!-- Dot grid pattern - denser and brighter -->
-        <div class="absolute inset-0 opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC41Ii8+PC9zdmc+')] pointer-events-none"></div>
-        
         <h2 class="absolute top-4 left-6 text-xs uppercase tracking-widest text-zinc-600 font-bold">The Tabletop</h2>
         
         <!-- Zoom indicator -->
@@ -777,6 +774,9 @@ const igniteVerb = (verbId) => {
           @mousedown="startPanning"
           @wheel="onZoom"
         >
+          <!-- Dot grid pattern - moves with zoom and pan -->
+          <div class="absolute inset-0 opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC41Ii8+PC9zdmc+')] pointer-events-none"></div>
+          
           <!-- Verbs as draggable elements on canvas -->
           <div 
             v-for="verb in verbs" 
