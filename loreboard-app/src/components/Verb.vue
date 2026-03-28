@@ -86,9 +86,9 @@ const colorClass = computed(() => verbColors[props.verb.type] || 'border-zinc-60
       colorClass, 
       'bg-opacity-80 backdrop-blur-sm',
       'shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40',
-      isDragOver && !isRejected ? 'ring-4 ring-orange-500/50 scale-[1.02] bg-zinc-800/80' : 'ring-1 ring-zinc-800',
-      isRejected ? 'ring-4 ring-red-500 border-red-500 animate-[shake_0.5s_ease-in-out]' : '',
-      verb.state === 'READY' || isSelected ? 'ring-2 ring-orange-400/50 shadow-orange-900/40' : ''
+      isDragOver && !isRejected ? 'border-orange-400 scale-[1.02]' : '',
+      isRejected ? 'border-red-500 animate-[shake_0.5s_ease-in-out]' : '',
+      verb.state === 'READY' || isSelected ? 'border-orange-400 border-4' : ''
     ]"
     @dragover="handleDragOver"
     @dragleave="handleDragLeave"
