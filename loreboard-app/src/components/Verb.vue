@@ -3,7 +3,8 @@ import { computed, ref } from 'vue'
 
 const props = defineProps({
   verb: { type: Object, required: true },
-  slottedCards: { type: Array, default: () => [] }
+  slottedCards: { type: Array, default: () => [] },
+  isHighlighted: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['drop', 'dragover', 'dragleave'])
@@ -80,7 +81,8 @@ const colorClass = computed(() => verbColors[props.verb.type] || 'border-zinc-60
       'shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40',
       isDragOver && !isRejected ? 'border-orange-400 scale-[1.02]' : '',
       isRejected ? 'border-red-500 animate-[shake_0.5s_ease-in-out]' : '',
-      verb.state === 'READY' ? 'shadow-[0_0_20px_4px_rgba(251,146,60,0.4)] animate-pulse' : ''
+      verb.state === 'READY' ? 'border-orange-400' : '',
+      isHighlighted ? 'ring-2 ring-orange-400 bg-orange-900/20' : ''
     ]"
     @dragover="handleDragOver"
     @dragleave="handleDragLeave"

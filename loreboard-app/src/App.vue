@@ -40,6 +40,9 @@ const slottedCards = ref({
 // 5. Global selection state - only one card can be selected at a time
 const selectedCardId = ref(null)
 
+// 6. Drag highlight state - highlight valid verb slots during drag
+const highlightedVerbs = ref(new Set())
+
 const onCardSelect = ({ cardId }) => {
   // Toggle: if clicking already selected card, deselect it
   if (selectedCardId.value === cardId) {
@@ -48,6 +51,11 @@ const onCardSelect = ({ cardId }) => {
     selectedCardId.value = cardId
   }
   console.log('Card selected:', selectedCardId.value)
+}
+
+// Check if card aspects match verb requirements
+const canCardFitVerb = (card, verb) => {
+  return card.aspects.some(a => verb.requiredAspects.includes(a))
 }
 
 // --- Interaction Logic ---
@@ -68,6 +76,11 @@ const onMouseMove = (event) => {
   // containerRect already includes panOffset and zoom from CSS transform
   const mouseX = (event.clientX - containerRect.left) / zoomLevel.value
   const mouseY = (event.clientY - containerRect.top) / zoomLevel.value
+  
+  // Update highlight during drag
+  if (draggedItem.value.type === 'card' && draggedItem.value.fromDrawer) {
+    updateVerbHighlights(draggedItem.value.originalCard)
+  }
   
   // Update position based on drag type
   if (draggedItem.value.type === 'card') {
@@ -94,6 +107,17 @@ const onMouseMove = (event) => {
       verbs.value[idx].y = mouseY - draggedItem.value.offsetY
     }
   }
+}
+
+// Update verb highlights based on dragged card
+const updateVerbHighlights = (card) => {
+  const validVerbs = new Set()
+  verbs.value.forEach(verb => {
+    if (verb.state !== 'IGNITED' && canCardFitVerb(card, verb)) {
+      validVerbs.add(verb.id)
+    }
+  })
+  highlightedVerbs.value = validVerbs
 }
 
 // Unified mouse up handler - cleans up and handles drop logic
@@ -181,6 +205,7 @@ const onMouseUp = (event) => {
 
 const cleanupDrag = () => {
   draggedItem.value = null
+  highlightedVerbs.value = new Set()
   window.removeEventListener('mousemove', onMouseMove)
   window.removeEventListener('mouseup', onMouseUp)
 }
@@ -563,6 +588,7 @@ const igniteVerb = (verbId) => {
           :key="verb.id" 
           :verb="verb" 
           :slottedCards="slottedCards[verb.id]"
+          :is-highlighted="highlightedVerbs.has(verb.id)"
           @drop="handleVerbDrop"
           @ignite="igniteVerb"
           class="shrink-0"
