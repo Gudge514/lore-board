@@ -81,8 +81,7 @@ const colorClass = computed(() => verbColors[props.verb.type] || 'border-zinc-60
       'shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40',
       isDragOver && !isRejected ? 'border-orange-400 scale-[1.02]' : '',
       isRejected ? 'border-red-500 animate-[shake_0.5s_ease-in-out]' : '',
-      verb.state === 'READY' ? 'border-orange-400' : '',
-      isHighlighted ? 'ring-2 ring-orange-400 bg-orange-900/20' : ''
+      verb.state === 'READY' ? 'border-orange-400' : ''
     ]"
     @dragover="handleDragOver"
     @dragleave="handleDragLeave"
@@ -100,11 +99,12 @@ const colorClass = computed(() => verbColors[props.verb.type] || 'border-zinc-60
       </p>
     </div>
 
-    <!-- The actual slot -->
+    <!-- The actual slot - highlighted when valid card is dragged -->
     <div 
-      class="w-full h-24 rounded-lg border-2 border-dashed bg-zinc-950/30 flex items-center justify-center p-1 relative overflow-hidden transition-colors pointer-events-none"
+      class="w-full h-24 rounded-lg border-2 border-dashed bg-zinc-950/30 flex items-center justify-center p-1 relative overflow-hidden transition-all duration-200 pointer-events-none"
       :class="[
-        isDragOver && !isRejected ? 'border-orange-400/50 bg-orange-900/10' : 'border-zinc-600/50',
+        isHighlighted ? 'border-orange-400 bg-orange-900/20 shadow-[0_0_15px_3px_rgba(251,146,60,0.3)]' : 'border-zinc-600/50',
+        isDragOver && !isRejected ? 'border-orange-400/50 bg-orange-900/10' : '',
         isRejected ? 'border-red-500/80 bg-red-900/20' : ''
       ]"
     >

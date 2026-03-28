@@ -77,8 +77,8 @@ const onMouseMove = (event) => {
   const mouseX = (event.clientX - containerRect.left) / zoomLevel.value
   const mouseY = (event.clientY - containerRect.top) / zoomLevel.value
   
-  // Update highlight during drag
-  if (draggedItem.value.type === 'card' && draggedItem.value.fromDrawer) {
+  // Update highlight during drag (for both drawer and tabletop drag)
+  if (draggedItem.value.type === 'card') {
     updateVerbHighlights(draggedItem.value.originalCard)
   }
   
