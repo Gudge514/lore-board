@@ -37,6 +37,19 @@ const slottedCards = ref({
   v1: [], v2: [], v3: []
 })
 
+// 5. Global selection state - only one card can be selected at a time
+const selectedCardId = ref(null)
+
+const onCardSelect = ({ cardId }) => {
+  // Toggle: if clicking already selected card, deselect it
+  if (selectedCardId.value === cardId) {
+    selectedCardId.value = null
+  } else {
+    selectedCardId.value = cardId
+  }
+  console.log('Card selected:', selectedCardId.value)
+}
+
 // --- Interaction Logic ---
 const draggedItem = ref(null)
 
@@ -170,15 +183,6 @@ const cleanupDrag = () => {
   draggedItem.value = null
   window.removeEventListener('mousemove', onMouseMove)
   window.removeEventListener('mouseup', onMouseUp)
-}
-
-// Card selection - ensure only one card is selected at a time
-const onCardSelect = ({ cardId, selected }) => {
-  if (!selected) return
-  
-  // Deselect all other cards (they manage their own isSelected state)
-  // In a real app, we'd track selected card globally
-  console.log('Card selected:', cardId)
 }
 
 const startDraggingCard = (card, event) => {
@@ -626,7 +630,7 @@ const igniteVerb = (verbId) => {
             :style="{ left: (card.x || 100) + 'px', top: (card.y || 100) + 'px' }"
             @mousedown.stop="startDraggingCard(card, $event)"
           >
-            <Card :card="card" @select="onCardSelect" />
+            <Card :card="card" :is-selected="selectedCardId === card.id" @select="onCardSelect" />
           </div>
           
           <!-- Drag card (temporary visual for drawer drag) -->
@@ -653,7 +657,7 @@ const igniteVerb = (verbId) => {
           :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && draggedItem.originalCard.id === card.id }"
           @mousedown.stop="startDraggingCard(card, $event)"
         >
-          <Card :card="card" @select="onCardSelect" />
+          <Card :card="card" :is-selected="selectedCardId === card.id" @select="onCardSelect" />
         </div>
         <div v-if="drawerCards.length === 0" class="h-full w-full flex items-center justify-center text-zinc-600 text-sm italic">
           Drawer is empty...

@@ -80,7 +80,7 @@ const colorClass = computed(() => verbColors[props.verb.type] || 'border-zinc-60
       'shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40',
       isDragOver && !isRejected ? 'border-orange-400 scale-[1.02]' : '',
       isRejected ? 'border-red-500 animate-[shake_0.5s_ease-in-out]' : '',
-      verb.state === 'READY' ? 'outline outline-2 outline-orange-400/50 outline-offset-2' : ''
+      verb.state === 'READY' ? 'shadow-[0_0_20px_4px_rgba(251,146,60,0.4)] animate-pulse' : ''
     ]"
     @dragover="handleDragOver"
     @dragleave="handleDragLeave"

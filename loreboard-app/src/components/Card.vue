@@ -1,20 +1,18 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 
 const props = defineProps({
   card: { type: Object, required: true },
   isSlot: { type: Boolean, default: false },
-  isLocked: { type: Boolean, default: false }
+  isLocked: { type: Boolean, default: false },
+  isSelected: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['click', 'select'])
 
-const isSelected = ref(false)
-
 const handleClick = (e) => {
   e.stopPropagation()
-  isSelected.value = !isSelected.value
-  emit('select', { cardId: props.card.id, selected: isSelected.value })
+  emit('select', { cardId: props.card.id })
   emit('click', e)
 }
 
