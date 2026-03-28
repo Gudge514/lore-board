@@ -44,16 +44,17 @@ const draggedItem = ref(null)
 const onMouseMove = (event) => {
   if (!draggedItem.value) return
   
-  // Use the relative container as reference, not the section with padding
+  // Use the relative container as reference
   const canvas = document.querySelector('section')
   const container = canvas?.querySelector('.relative.w-full.h-full')
   if (!canvas || !container) return
   
   const containerRect = container.getBoundingClientRect()
   
-  // Account for zoom: divide mouse position by zoom level
-  const mouseX = (event.clientX - containerRect.left - panOffset.value.x) / zoomLevel.value
-  const mouseY = (event.clientY - containerRect.top - panOffset.value.y) / zoomLevel.value
+  // Convert screen coordinates to canvas coordinates
+  // containerRect already includes panOffset and zoom from CSS transform
+  const mouseX = (event.clientX - containerRect.left) / zoomLevel.value
+  const mouseY = (event.clientY - containerRect.top) / zoomLevel.value
   
   // Update position based on drag type
   if (draggedItem.value.type === 'card') {
