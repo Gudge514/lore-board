@@ -4,10 +4,11 @@ import { computed, ref } from 'vue'
 const props = defineProps({
   verb: { type: Object, required: true },
   slottedCards: { type: Array, default: () => [] },
-  isHighlighted: { type: Boolean, default: false }
+  isHighlighted: { type: Boolean, default: false },
+  isSelected: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['drop', 'dragover', 'dragleave'])
+const emit = defineEmits(['drop', 'dragover', 'dragleave', 'select', 'click'])
 
 const isDragOver = ref(false)
 const isRejected = ref(false)
@@ -61,6 +62,11 @@ const rejectDrop = () => {
   }, 500) // Duration of the shake animation
 }
 
+const handleClick = (e) => {
+  emit('select', { verbId: props.verb.id, selected: !props.isSelected })
+  emit('click', e)
+}
+
 // Verb colors - Black & Orange theme with 80% opacity backgrounds
 const verbColors = {
   study: 'border-orange-500/50 bg-orange-900/10 shadow-orange-900/30',
@@ -81,11 +87,14 @@ const colorClass = computed(() => verbColors[props.verb.type] || 'border-zinc-60
       'shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40',
       isDragOver && !isRejected ? 'border-orange-400 scale-[1.02]' : '',
       isRejected ? 'border-red-500 animate-[shake_0.5s_ease-in-out]' : '',
-      verb.state === 'READY' ? 'border-orange-400' : ''
+      verb.state === 'READY' ? 'border-orange-400' : '',
+      isHighlighted ? 'ring-2 ring-orange-400 bg-orange-900/20' : '',
+      isSelected ? 'outline outline-2 outline-orange-400/50 outline-offset-2' : ''
     ]"
     @dragover="handleDragOver"
     @dragleave="handleDragLeave"
     @drop="handleDrop"
+    @click.stop="handleClick"
   >
     <!-- Background Icon / Title -->
     <div class="text-center w-full border-b border-zinc-700/50 pb-2 mb-2 pointer-events-none">

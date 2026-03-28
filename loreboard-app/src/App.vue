@@ -39,11 +39,15 @@ const slottedCards = ref({
 
 // 5. Global selection state - only one card can be selected at a time
 const selectedCardId = ref(null)
+const selectedVerbId = ref(null)
 
 // 6. Drag highlight state - highlight valid verb slots during drag
 const highlightedVerbs = ref(new Set())
 
 const onCardSelect = ({ cardId }) => {
+  // Deselect verb when selecting card
+  selectedVerbId.value = null
+  
   // Toggle: if clicking already selected card, deselect it
   if (selectedCardId.value === cardId) {
     selectedCardId.value = null
@@ -53,9 +57,106 @@ const onCardSelect = ({ cardId }) => {
   console.log('Card selected:', selectedCardId.value)
 }
 
+const onVerbSelect = ({ verbId, selected }) => {
+  // Deselect card when selecting verb
+  selectedCardId.value = null
+  
+  // Toggle: if clicking already selected verb, deselect it
+  if (selectedVerbId.value === verbId) {
+    selectedVerbId.value = null
+  } else {
+    selectedVerbId.value = verbId
+  }
+  console.log('Verb selected:', selectedVerbId.value)
+}
+
 // Check if card aspects match verb requirements
 const canCardFitVerb = (card, verb) => {
   return card.aspects.some(a => verb.requiredAspects.includes(a))
+}
+
+// Delete selected card or verb with Delete/Backspace key
+const handleKeyDown = (event) => {
+  // Only handle Delete or Backspace
+  if (event.key !== 'Delete' && event.key !== 'Backspace') return
+  
+  // Don't delete if typing in input
+  if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return
+  
+  // Delete selected card
+  if (selectedCardId.value) {
+    // Try to remove from tabletop
+    const tableIdx = tabletopCards.value.findIndex(c => c.id === selectedCardId.value)
+    if (tableIdx > -1) {
+      tabletopCards.value.splice(tableIdx, 1)
+      selectedCardId.value = null
+      console.log('Card deleted from tabletop')
+      return
+    }
+    
+    // Try to remove from drawer
+    const drawerIdx = drawerCards.value.findIndex(c => c.id === selectedCardId.value)
+    if (drawerIdx > -1) {
+      drawerCards.value.splice(drawerIdx, 1)
+      selectedCardId.value = null
+      console.log('Card deleted from drawer')
+      return
+    }
+    
+    // Try to remove from verb slots (returns card to tabletop)
+    for (const [verbId, slots] of Object.entries(slottedCards.value)) {
+      const slotIdx = slots.findIndex(c => c.id === selectedCardId.value)
+      if (slotIdx > -1) {
+        const removedCard = slots.splice(slotIdx, 1)[0]
+        // Return card to tabletop
+        tabletopCards.value.push(removedCard)
+        // Set verb to IDLE if empty
+        const verb = verbs.value.find(v => v.id === verbId)
+        if (verb && slots.length === 0) {
+          verb.state = 'IDLE'
+        }
+        selectedCardId.value = null
+        console.log('Card removed from verb slot')
+        return
+      }
+    }
+  }
+  
+  // Delete selected verb (only if not in sidebar - i.e., has x/y coordinates)
+  if (selectedVerbId.value) {
+    const verbIdx = verbs.value.findIndex(v => v.id === selectedVerbId.value)
+    if (verbIdx > -1) {
+      const verb = verbs.value[verbIdx]
+      // Only delete verbs that are on the tabletop (have x/y)
+      if (verb.x !== undefined && verb.y !== undefined) {
+        // Return any slotted card to tabletop
+        const slotted = slottedCards.value[selectedVerbId.value]
+        if (slotted && slotted.length > 0) {
+          tabletopCards.value.push(...slotted)
+          slottedCards.value[selectedVerbId.value] = []
+        }
+        // Remove verb
+        verbs.value.splice(verbIdx, 1)
+        selectedVerbId.value = null
+        console.log('Verb deleted from tabletop')
+        return
+      } else {
+        console.log('Cannot delete sidebar verb')
+      }
+    }
+  }
+}
+
+// Setup global keyboard listener
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', handleKeyDown)
+}
+
+// Cleanup on component unmount
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    window.removeEventListener('keydown', handleKeyDown)
+  })
 }
 
 // --- Interaction Logic ---
@@ -589,8 +690,10 @@ const igniteVerb = (verbId) => {
           :verb="verb" 
           :slottedCards="slottedCards[verb.id]"
           :is-highlighted="highlightedVerbs.has(verb.id)"
+          :is-selected="selectedVerbId === verb.id"
           @drop="handleVerbDrop"
           @ignite="igniteVerb"
+          @select="onVerbSelect"
           class="shrink-0"
         >
           <!-- Using scoped slot to render the Card component inside the Verb -->
