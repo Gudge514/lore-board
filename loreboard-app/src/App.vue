@@ -82,12 +82,12 @@ const filteredDrawerCards = computed(() => {
 
 // Get all verbs for drawer display
 const allVerbs = computed(() => {
-  let verbs = [...verbs.value]
+  let verbList = [...verbs.value]
   
   // Filter by search query
   if (drawerSearchQuery.value.trim()) {
     const query = drawerSearchQuery.value.toLowerCase().trim()
-    verbs = verbs.filter(v => 
+    verbList = verbList.filter(v => 
       v.label.toLowerCase().includes(query) ||
       v.requiredAspects.some(a => a.toLowerCase().includes(query))
     )
@@ -95,13 +95,13 @@ const allVerbs = computed(() => {
   
   // Filter by type tab
   if (drawerActiveTab.value === 'verbs') {
-    return verbs
+    return verbList
   } else if (drawerActiveTab.value !== 'all') {
     // For resource tabs, don't show verbs
     return []
   }
   
-  return verbs
+  return verbList
 })
 
 const toggleDrawer = () => {
