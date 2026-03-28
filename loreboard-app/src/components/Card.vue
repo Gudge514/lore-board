@@ -9,12 +9,12 @@ const props = defineProps({
 
 // Removed HTML5 drag events - using custom mouse drag in App.vue
 
-// Color mapping based on card type
+// Color mapping based on card type - Black & Orange theme
 const typeColors = {
-  dynamic: 'border-emerald-500/50 bg-emerald-900/20 shadow-emerald-900/50',
-  static: 'border-slate-500/50 bg-slate-800 shadow-slate-900/50',
-  secret: 'border-amber-500/50 bg-amber-900/20 shadow-amber-900/50',
-  nemesis: 'border-rose-500/50 bg-rose-900/20 shadow-rose-900/50'
+  dynamic: 'border-orange-400/50 bg-orange-900/15 shadow-orange-900/40',
+  static: 'border-zinc-600/50 bg-zinc-800 shadow-zinc-900/50',
+  secret: 'border-amber-500/50 bg-amber-900/15 shadow-amber-900/40',
+  nemesis: 'border-red-500/50 bg-red-900/15 shadow-red-900/40'
 }
 
 const colorClass = computed(() => typeColors[props.card.type] || typeColors.static)
@@ -34,19 +34,19 @@ const colorClass = computed(() => typeColors[props.card.type] || typeColors.stat
 
     <div class="flex items-start justify-between z-10">
       <div class="flex items-center gap-2">
-        <span class="text-xs font-bold uppercase tracking-widest text-slate-400">
+        <span class="text-xs font-bold uppercase tracking-widest text-zinc-400">
           {{ card.type }}
         </span>
       </div>
       
       <!-- Ephemeral Timer (if duration exists) -->
-      <div v-if="card.duration" class="flex items-center gap-1 text-xs text-rose-400/80 animate-pulse">
+      <div v-if="card.duration" class="flex items-center gap-1 text-xs text-orange-400/80 animate-pulse">
         ⏳ {{ card.duration }}s
       </div>
     </div>
 
     <div class="mt-4 z-10">
-      <h3 class="font-medium text-slate-200 text-sm break-words leading-tight">{{ card.label }}</h3>
+      <h3 class="font-medium text-zinc-100 text-sm break-words leading-tight">{{ card.label }}</h3>
     </div>
 
     <!-- Aspect tags -->
@@ -54,15 +54,15 @@ const colorClass = computed(() => typeColors[props.card.type] || typeColors.stat
       <span 
         v-for="aspect in card.aspects" 
         :key="aspect"
-        class="text-[10px] px-1.5 py-0.5 rounded-sm bg-slate-950/50 border border-slate-700/50 text-slate-400"
+        class="text-[10px] px-1.5 py-0.5 rounded-sm bg-zinc-950/50 border border-zinc-700/50 text-zinc-400"
       >
         {{ aspect }}
       </span>
     </div>
 
     <!-- Lock overlay if processing -->
-    <div v-if="isLocked" class="absolute inset-0 bg-slate-900/50 flex items-center justify-center rounded-lg z-20 backdrop-blur-[1px]">
-      <span class="text-xs font-bold uppercase tracking-widest text-rose-400">LOCKED</span>
+    <div v-if="isLocked" class="absolute inset-0 bg-zinc-950/50 flex items-center justify-center rounded-lg z-20 backdrop-blur-[1px]">
+      <span class="text-xs font-bold uppercase tracking-widest text-orange-400">LOCKED</span>
     </div>
   </div>
 </template>

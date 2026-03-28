@@ -441,17 +441,17 @@ const igniteVerb = (verbId) => {
 </script>
 
 <template>
-  <div class="h-screen w-screen bg-slate-900 text-slate-300 font-mono overflow-hidden flex flex-col relative">
+  <div class="h-screen w-screen bg-zinc-950 text-zinc-300 font-mono overflow-hidden flex flex-col relative">
     
     <!-- Top Bar -->
-    <header class="h-12 border-b border-slate-800 bg-slate-900/50 backdrop-blur flex items-center px-4 justify-between z-50">
+    <header class="h-12 border-b border-zinc-800 bg-zinc-950/50 backdrop-blur flex items-center px-4 justify-between z-50">
       <div class="flex items-center gap-2">
-        <span class="text-rose-500 font-bold">LORE</span>
-        <span class="text-slate-500">BOARD v0.1</span>
+        <span class="text-orange-500 font-bold">LORE</span>
+        <span class="text-zinc-500">BOARD v0.1</span>
       </div>
-      <div class="flex items-center gap-4 text-xs text-slate-500">
+      <div class="flex items-center gap-4 text-xs text-zinc-500">
         <span>Tokens: 120k / 500k</span>
-        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Daemon Active</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span> Daemon Active</span>
       </div>
     </header>
 
@@ -459,8 +459,8 @@ const igniteVerb = (verbId) => {
     <main class="flex-1 flex overflow-hidden">
       
       <!-- Left Panel: Verb List -->
-      <aside class="w-64 border-r border-slate-800 bg-slate-950/30 p-4 flex flex-col gap-6 overflow-y-auto z-10 overflow-x-visible">
-        <h2 class="text-xs uppercase tracking-widest text-slate-500 font-bold mb-2">Available Rituals</h2>
+      <aside class="w-64 border-r border-zinc-800 bg-zinc-950/30 p-4 flex flex-col gap-6 overflow-y-auto z-10 overflow-x-visible">
+        <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-2">Available Rituals</h2>
         
         <Verb 
           v-for="verb in verbs" 
@@ -481,13 +481,13 @@ const igniteVerb = (verbId) => {
 
       <!-- Center Panel: The Tabletop Canvas -->
       <section 
-        class="flex-1 relative bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 to-slate-950 p-6 overflow-hidden"
+        class="flex-1 relative bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-800 to-zinc-950 p-6 overflow-hidden"
         @dragover.prevent
         @drop="handleCanvasDrop"
       >
         <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHBhdGggZD0iTTAgMGg0MHY0MEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0wIDEwaDQwTTAgMjBoNDBNMCAzMGg0ME0xMCAwdjQwTTIwIDB2NDBNMzAgMHY0MCIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvc3ZnPg==')] pointer-events-none"></div>
         
-        <h2 class="absolute top-4 left-6 text-xs uppercase tracking-widest text-slate-600 font-bold">The Tabletop</h2>
+        <h2 class="absolute top-4 left-6 text-xs uppercase tracking-widest text-zinc-600 font-bold">The Tabletop</h2>
 
         <!-- Render dropped cards and verbs on tabletop with absolute positioning -->
         <div class="relative w-full h-full" @mousedown="startPanning">
@@ -537,8 +537,8 @@ const igniteVerb = (verbId) => {
     </main>
 
     <!-- Bottom Panel: The Drawer -->
-    <footer class="h-48 border-t border-slate-800 bg-slate-950 p-4 z-20">
-      <h2 class="text-xs uppercase tracking-widest text-slate-500 font-bold mb-4">Resource Drawer (Your Hand)</h2>
+    <footer class="h-48 border-t border-zinc-800 bg-zinc-950 p-4 z-20">
+      <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-4">Resource Drawer (Your Hand)</h2>
       <div class="flex gap-4 overflow-x-auto pb-4 h-full items-start">
         <div 
           v-for="card in drawerCards" 
@@ -549,7 +549,7 @@ const igniteVerb = (verbId) => {
         >
           <Card :card="card" />
         </div>
-        <div v-if="drawerCards.length === 0" class="h-full w-full flex items-center justify-center text-slate-600 text-sm italic">
+        <div v-if="drawerCards.length === 0" class="h-full w-full flex items-center justify-center text-zinc-600 text-sm italic">
           Drawer is empty...
         </div>
       </div>
