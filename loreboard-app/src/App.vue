@@ -958,7 +958,7 @@ const igniteVerb = (verbId) => {
         @touchstart="startDrawerDrag"
         @click="toggleDrawer"
       >
-        <div class="w-48 h-1 bg-zinc-600 rounded-full"></div>
+        <div class="w-64 h-1 bg-zinc-600 rounded-full"></div>
       </div>
       
       <!-- Drawer content (only visible when open) -->
@@ -995,7 +995,7 @@ const igniteVerb = (verbId) => {
         </div>
         
         <!-- Cards and verbs grid -->
-        <div class="flex-1 overflow-y-auto min-h-0">
+        <div class="flex-1 overflow-y-auto scrollbar-hide pb-2 min-h-0">
           <div class="flex gap-4 pb-2">
             <!-- Resource cards -->
             <template v-if="drawerActiveTab !== 'verbs'">
