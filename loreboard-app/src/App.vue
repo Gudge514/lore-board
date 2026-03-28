@@ -268,8 +268,36 @@ const startDraggingVerb = (verb, event) => {
 }
 
 
-const startPanning = () => {
-  console.log('Panning logic needs implementation')
+// --- Canvas Panning ---
+const panOffset = ref({ x: 0, y: 0 })
+const isPanning = ref(false)
+const panStart = ref({ x: 0, y: 0 })
+
+const startPanning = (event) => {
+  // Only pan on middle-click or ctrl+click
+  if (event.button !== 1 && !event.ctrlKey) return
+  
+  isPanning.value = true
+  panStart.value = {
+    x: event.clientX - panOffset.value.x,
+    y: event.clientY - panOffset.value.y
+  }
+  
+  window.addEventListener('mousemove', onPanMove, { passive: true })
+  window.addEventListener('mouseup', onPanEnd, { once: true })
+}
+
+const onPanMove = (event) => {
+  if (!isPanning.value) return
+  panOffset.value = {
+    x: event.clientX - panStart.value.x,
+    y: event.clientY - panStart.value.y
+  }
+}
+
+const onPanEnd = () => {
+  isPanning.value = false
+  window.removeEventListener('mousemove', onPanMove)
 }
 
 // Drawer state for resize
@@ -485,13 +513,17 @@ const igniteVerb = (verbId) => {
         @dragover.prevent
         @drop="handleCanvasDrop"
       >
-        <!-- Dot grid pattern -->
-        <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4zIi8+PC9zdmc+')] pointer-events-none"></div>
+        <!-- Dot grid pattern - denser and brighter -->
+        <div class="absolute inset-0 opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC41Ii8+PC9zdmc+')] pointer-events-none"></div>
         
         <h2 class="absolute top-4 left-6 text-xs uppercase tracking-widest text-zinc-600 font-bold">The Tabletop</h2>
 
         <!-- Render dropped cards and verbs on tabletop with absolute positioning -->
-        <div class="relative w-full h-full" @mousedown="startPanning">
+        <div 
+          class="relative w-full h-full"
+          :style="{ transform: `translate(${panOffset.x}px, ${panOffset.y}px)` }"
+          @mousedown="startPanning"
+        >
           <!-- Verbs as draggable elements on canvas -->
           <div 
             v-for="verb in verbs" 
