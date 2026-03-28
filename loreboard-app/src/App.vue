@@ -774,8 +774,18 @@ const igniteVerb = (verbId) => {
           @mousedown="startPanning"
           @wheel="onZoom"
         >
-          <!-- Dot grid pattern - moves with zoom and pan -->
-          <div class="absolute inset-0 opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC41Ii8+PC9zdmc+')] pointer-events-none"></div>
+          <!-- Dot grid pattern - extra large to cover zoom and pan -->
+          <div 
+            class="absolute opacity-40 pointer-events-none"
+            :style="{
+              width: '400vw',
+              height: '400vw',
+              left: '-200vw',
+              top: '-200vw',
+              backgroundImage: 'url(\'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC41Ii8+PC9zdmc+\')',
+              backgroundSize: '40px 40px'
+            }"
+          ></div>
           
           <!-- Verbs as draggable elements on canvas -->
           <div 
