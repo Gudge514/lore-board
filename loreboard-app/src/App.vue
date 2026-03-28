@@ -420,6 +420,18 @@ const handleVerbDrop = ({ card, verbId }) => {
   // Put in slot
   slottedCards.value[verbId].push(card)
   verb.state = 'READY'
+  
+  // Ensure only one Verb is READY at a time
+  verbs.value.forEach(v => {
+    if (v.id !== verbId && v.state === 'READY') {
+      v.state = 'IDLE'
+      // Clear the slot and return card to tabletop
+      const clearedCard = slottedCards.value[v.id].pop()
+      if (clearedCard) {
+        tabletopCards.value.push(clearedCard)
+      }
+    }
+  })
 }
 
 // Drag into a Verb Slot (from Mouse Drag - collision detection)
@@ -471,6 +483,18 @@ const handleVerbDropFromMouse = (card, verbId, fromDrawer = false) => {
   
   slottedCards.value[verbId].push(slotCard)
   verb.state = 'READY'
+  
+  // Ensure only one Verb is READY at a time
+  verbs.value.forEach(v => {
+    if (v.id !== verbId && v.state === 'READY') {
+      v.state = 'IDLE'
+      // Clear the slot and return card to tabletop
+      const clearedCard = slottedCards.value[v.id].pop()
+      if (clearedCard) {
+        tabletopCards.value.push(clearedCard)
+      }
+    }
+  })
 }
 
 // Ignite Action

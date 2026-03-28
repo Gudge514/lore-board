@@ -6,18 +6,10 @@ const props = defineProps({
   slottedCards: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['drop', 'dragover', 'dragleave', 'select', 'click'])
+const emit = defineEmits(['drop', 'dragover', 'dragleave'])
 
 const isDragOver = ref(false)
 const isRejected = ref(false)
-const isSelected = ref(false)
-
-const handleClick = (e) => {
-  // Toggle selection
-  isSelected.value = !isSelected.value
-  emit('select', { verbId: props.verb.id, selected: isSelected.value })
-  emit('click', e)
-}
 
 const handleDragOver = (e) => {
   e.preventDefault()
@@ -88,25 +80,21 @@ const colorClass = computed(() => verbColors[props.verb.type] || 'border-zinc-60
       'shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40',
       isDragOver && !isRejected ? 'border-orange-400 scale-[1.02]' : '',
       isRejected ? 'border-red-500 animate-[shake_0.5s_ease-in-out]' : '',
-      verb.state === 'READY' || isSelected ? 'border-orange-400 border-4' : ''
+      verb.state === 'READY' ? 'outline outline-2 outline-orange-400/50 outline-offset-2' : ''
     ]"
     @dragover="handleDragOver"
     @dragleave="handleDragLeave"
     @drop="handleDrop"
-    @click.stop="handleClick"
   >
     <!-- Background Icon / Title -->
     <div class="text-center w-full border-b border-zinc-700/50 pb-2 mb-2 pointer-events-none">
-      <div class="flex items-center justify-center gap-1">
-        <span class="text-3xl opacity-80">{{ verb.icon }}</span>
-        <span v-if="isSelected" class="text-xs text-orange-400">✓</span>
-      </div>
+      <span class="text-3xl opacity-80">{{ verb.icon }}</span>
       <h3 class="font-bold text-zinc-100 mt-1">{{ verb.label }}</h3>
       <p 
         class="text-[10px] mt-0.5 tracking-wider uppercase transition-colors"
-        :class="verb.state === 'READY' || isSelected ? 'text-orange-400 font-bold' : 'text-zinc-500'"
+        :class="verb.state === 'READY' ? 'text-orange-400 font-bold' : 'text-zinc-500'"
       >
-        {{ isSelected ? 'SELECTED' : (verb.state || 'IDLE') }}
+        {{ verb.state || 'IDLE' }}
       </p>
     </div>
 
