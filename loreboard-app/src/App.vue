@@ -18,26 +18,27 @@ const tabletopCards = ref([
   { id: 't1', type: 'static', label: 'Initial Lore Fragment', aspects: ['knowledge'], duration: null, x: 100, y: 100 }
 ])
 
-// 3. Verbs (Slots): The tasks
-// States: IDLE -> READY -> IGNITED -> COMPLETE
-const verbs = ref([
-  {
-    id: 'v1', type: 'study', icon: '🧠', label: 'Extract Lore', state: 'IDLE', requiredAspects: ['raw_data', 'text'], x: 50, y: 300
-  },
-  {
-    id: 'v2', type: 'work', icon: '⚒️', label: 'Execute Task', state: 'IDLE', requiredAspects: ['tool'], x: 50, y: 450
-  },
-  {
-    id: 'v3', type: 'explore', icon: '🕵️', label: 'Deep Search', state: 'IDLE', requiredAspects: ['key'], x: 50, y: 600
-  }
+// 3. Verb Definitions (Templates in drawer)
+const verbDefinitions = ref([
+  { id: 'v1', type: 'study', icon: '🧠', label: 'Extract Lore', requiredAspects: ['raw_data', 'text'] },
+  { id: 'v2', type: 'work', icon: '⚒️', label: 'Execute Task', requiredAspects: ['tool'] },
+  { id: 'v3', type: 'explore', icon: '🕵️', label: 'Deep Search', requiredAspects: ['key'] }
 ])
 
-// 4. State tracking for slots (Which cards are inside which verb)
-const slottedCards = ref({
-  v1: [], v2: [], v3: []
-})
+// 3b. Canvas Verb Instances (dragged from drawer to canvas)
+const canvasVerbs = ref([
+  { instanceId: 'cv1', definitionId: 'v1', state: 'IDLE', slottedCards: [], x: 100, y: 300 },
+  { instanceId: 'cv2', definitionId: 'v2', state: 'IDLE', slottedCards: [], x: 100, y: 450 },
+  { instanceId: 'cv3', definitionId: 'v3', state: 'IDLE', slottedCards: [], x: 100, y: 600 }
+])
 
-// 4b. Running tasks (for left sidebar display)
+// Helper to get full verb data (merge definition + instance)
+const getCanvasVerb = (instance) => {
+  const def = verbDefinitions.value.find(d => d.id === instance.definitionId)
+  return { ...def, ...instance, id: instance.instanceId }
+}
+
+// 4. Running tasks (for left sidebar display)
 const runningTasks = ref([])
 
 // 5. Global selection state - only one card can be selected at a time
@@ -90,9 +91,9 @@ const getCardCountByType = (type) => {
   return drawerCards.value.filter(c => c.type === type).length
 }
 
-// Get all verbs for drawer display (always returns all verbs, filtering done in template)
+// Get all verb definitions for drawer display (always returns all verbs, filtering done in template)
 const allVerbs = computed(() => {
-  let verbList = [...verbs.value]
+  let verbList = [...verbDefinitions.value]
   
   // Filter by search query (always apply search)
   if (drawerSearchQuery.value.trim()) {
@@ -306,13 +307,18 @@ const onMouseMove = (event) => {
         tabletopCards.value[idx].y = newY
       }
     }
-  } else if (draggedItem.value.type === 'verb') {
-    // Verb: find and update the verb in verbs array for reactivity
-    const idx = verbs.value.findIndex(v => v.id === draggedItem.value.item.id)
+  } else if (draggedItem.value.type === 'verb-instance') {
+    // Dragging existing canvas instance: update position
+    const instance = draggedItem.value.instance
+    const idx = canvasVerbs.value.findIndex(cv => cv.instanceId === instance.instanceId)
     if (idx > -1) {
-      verbs.value[idx].x = mouseX - draggedItem.value.offsetX
-      verbs.value[idx].y = mouseY - draggedItem.value.offsetY
+      canvasVerbs.value[idx].x = mouseX - draggedItem.value.offsetX
+      canvasVerbs.value[idx].y = mouseY - draggedItem.value.offsetY
     }
+  } else if (draggedItem.value.type === 'verb-definition') {
+    // Dragging from drawer: update temp drag instance position
+    draggedItem.value.dragInstance.x = mouseX - draggedItem.value.offsetX
+    draggedItem.value.dragInstance.y = mouseY - draggedItem.value.offsetY
   }
 }
 
@@ -335,7 +341,44 @@ const onMouseUp = (event) => {
   const originalCard = draggedItem.value.originalCard
   const fromDrawer = draggedItem.value.fromDrawer
   
-  // Check if dropped on a Verb (for card/verb combination)
+  // Handle Verb drag
+  if (draggedItem.value.type === 'verb-definition' || draggedItem.value.type === 'verb-instance') {
+    const drawer = document.querySelector('footer')
+    if (drawer) {
+      const drawerRect = drawer.getBoundingClientRect()
+      if (event.clientX >= drawerRect.left && event.clientX <= drawerRect.right &&
+          event.clientY >= drawerRect.top && event.clientY <= drawerRect.bottom) {
+        // Dropped in drawer
+        if (draggedItem.value.type === 'verb-instance') {
+          // Remove instance from canvas
+          const idx = canvasVerbs.value.findIndex(cv => cv.instanceId === draggedItem.value.instance.instanceId)
+          if (idx > -1) {
+            // Return slotted cards to tabletop
+            const instance = canvasVerbs.value[idx]
+            if (instance.slottedCards.length > 0) {
+              tabletopCards.value.push(...instance.slottedCards)
+            }
+            canvasVerbs.value.splice(idx, 1)
+          }
+        }
+        // If from definition, just discard
+        cleanupDrag()
+        return
+      }
+    }
+    
+    // Dropped on canvas
+    if (draggedItem.value.type === 'verb-definition') {
+      // Create new instance on canvas
+      canvasVerbs.value.push({ ...draggedItem.value.dragInstance })
+    }
+    // If verb-instance, position already updated by onMouseMove
+    
+    cleanupDrag()
+    return
+  }
+  
+  // Handle Card drag
   if (draggedItem.value.type === 'card') {
     const canvas = document.querySelector('section')
     const container = canvas?.querySelector('.relative.w-full.h-full')
@@ -344,9 +387,9 @@ const onMouseUp = (event) => {
       const mouseX = event.clientX - containerRect.left
       const mouseY = event.clientY - containerRect.top
       
-      // Check collision with verbs on canvas
-      for (const verb of verbs.value) {
-        const verbEl = document.getElementById(`verb-${verb.id}`)
+      // Check collision with canvas verbs
+      for (const canvasVerb of canvasVerbs.value) {
+        const verbEl = document.getElementById(`verb-${canvasVerb.instanceId}`)
         if (verbEl) {
           const verbRect = verbEl.getBoundingClientRect()
           const verbX = verbRect.left - containerRect.left
@@ -358,7 +401,7 @@ const onMouseUp = (event) => {
           if (mouseX >= verbX && mouseX <= verbX + verbW &&
               mouseY >= verbY && mouseY <= verbY + verbH) {
             // Dropped on verb!
-            handleVerbDropFromMouse(originalCard, verb.id, fromDrawer)
+            handleVerbDropFromMouse(originalCard, canvasVerb.instanceId, fromDrawer)
             cleanupDrag()
             return
           }
@@ -402,9 +445,6 @@ const onMouseUp = (event) => {
       }
       // From tabletop: card is already on tabletop, position already updated by onMouseMove
     }
-  } else if (draggedItem.value.type === 'verb') {
-    // Verb drag - just cleanup (position already updated by onMouseMove)
-    // No special drop logic needed for verbs (they don't go into slots)
   }
   
   cleanupDrag()
@@ -493,6 +533,10 @@ const startDraggingVerb = (verb, event) => {
   const mouseX = (event.clientX - containerRect.left - panOffset.value.x) / zoomLevel.value
   const mouseY = (event.clientY - containerRect.top - panOffset.value.y) / zoomLevel.value
   
+  // Check if this is a verb definition (from drawer) or instance (from canvas)
+  const isDefinition = !!verbDefinitions.value.find(d => d.id === verb.id)
+  const isCanvasInstance = !!canvasVerbs.value.find(cv => cv.instanceId === verb.instanceId)
+  
   // Get the actual DOM element
   const el = event.currentTarget
   const elRect = el.getBoundingClientRect()
@@ -503,18 +547,32 @@ const startDraggingVerb = (verb, event) => {
   const offsetX = mouseX - elX
   const offsetY = mouseY - elY
   
-  // Then check if from sidebar and initialize position
-  const sidebar = document.querySelector('aside')
-  const isInSidebar = sidebar && sidebar.contains(el)
-  
-  if (isInSidebar) {
-    // Initialize position to current mouse - offset (so it stays under cursor)
-    verb.x = mouseX - offsetX
-    verb.y = mouseY - offsetY
+  if (isDefinition) {
+    // Dragging from drawer - create new instance on drop
+    draggedItem.value = {
+      type: 'verb-definition',
+      definition: verb,
+      dragInstance: {
+        instanceId: `cv-${Date.now()}`,
+        definitionId: verb.id,
+        state: 'IDLE',
+        slottedCards: [],
+        x: mouseX - offsetX,
+        y: mouseY - offsetY
+      },
+      offsetX,
+      offsetY
+    }
+  } else if (isCanvasInstance) {
+    // Dragging existing canvas instance
+    draggedItem.value = {
+      type: 'verb-instance',
+      instance: canvasVerbs.value.find(cv => cv.instanceId === verb.instanceId),
+      offsetX,
+      offsetY
+    }
   }
-  // If from canvas, keep existing x/y
   
-  draggedItem.value = { type: 'verb', item: verb, offsetX, offsetY }
   window.addEventListener('mousemove', onMouseMove, { passive: true })
   window.addEventListener('mouseup', onMouseUp, { once: true })
 }
@@ -680,16 +738,20 @@ const handleVerbDrop = ({ card, verbId }) => {
 }
 
 // Drag into a Verb Slot (from Mouse Drag - collision detection)
-const handleVerbDropFromMouse = (card, verbId, fromDrawer = false) => {
-  const verb = verbs.value.find(v => v.id === verbId)
+const handleVerbDropFromMouse = (card, verbInstanceId, fromDrawer = false) => {
+  const verbInstance = canvasVerbs.value.find(cv => cv.instanceId === verbInstanceId)
+  if (!verbInstance) return
   
-  if (verb.state === 'IGNITED') {
+  const verbDef = verbDefinitions.value.find(v => v.id === verbInstance.definitionId)
+  if (!verbDef) return
+  
+  if (verbInstance.state === 'IGNITED') {
     console.warn('Verb is processing, cannot drop!')
     return
   }
 
   // Basic aspect validation
-  const hasAspect = card.aspects.some(a => verb.requiredAspects.includes(a))
+  const hasAspect = card.aspects.some(a => verbDef.requiredAspects.includes(a))
   
   if (!hasAspect) {
     // Rejection feedback - could add visual shake here
@@ -705,19 +767,18 @@ const handleVerbDropFromMouse = (card, verbId, fromDrawer = false) => {
   }
 
   // Remove from other slots if it was moved from slot to slot
-  for (const [otherVerbId, slots] of Object.entries(slottedCards.value)) {
-    if (otherVerbId === verbId) continue
-    const slotIdx = slots.findIndex(c => c.id === card.id)
+  for (const otherInstance of canvasVerbs.value) {
+    if (otherInstance.instanceId === verbInstanceId) continue
+    const slotIdx = otherInstance.slottedCards.findIndex(c => c.id === card.id)
     if (slotIdx > -1) {
-      slots.splice(slotIdx, 1)
-      const otherVerb = verbs.value.find(v => v.id === otherVerbId)
-      if (slots.length === 0) otherVerb.state = 'IDLE'
+      otherInstance.slottedCards.splice(slotIdx, 1)
+      if (otherInstance.slottedCards.length === 0) otherInstance.state = 'IDLE'
     }
   }
 
   // If slot is full (MVP: max 1), bounce the old card to tabletop
-  if (slottedCards.value[verbId].length > 0) {
-    const bouncedCard = slottedCards.value[verbId].pop()
+  if (verbInstance.slottedCards.length > 0) {
+    const bouncedCard = verbInstance.slottedCards.pop()
     tabletopCards.value.push(bouncedCard)
   }
 
@@ -726,15 +787,15 @@ const handleVerbDropFromMouse = (card, verbId, fromDrawer = false) => {
     ? { ...card, id: `${card.id}-slot-${Date.now()}` } // New instance from drawer
     : { ...card } // Copy from tabletop
   
-  slottedCards.value[verbId].push(slotCard)
-  verb.state = 'READY'
+  verbInstance.slottedCards.push(slotCard)
+  verbInstance.state = 'READY'
   
-  // Ensure only one Verb is READY at a time
-  verbs.value.forEach(v => {
-    if (v.id !== verbId && v.state === 'READY') {
+  // Ensure only one Verb instance is READY at a time
+  canvasVerbs.value.forEach(v => {
+    if (v.instanceId !== verbInstanceId && v.state === 'READY') {
       v.state = 'IDLE'
       // Clear the slot and return card to tabletop
-      const clearedCard = slottedCards.value[v.id].pop()
+      const clearedCard = v.slottedCards.pop()
       if (clearedCard) {
         tabletopCards.value.push(clearedCard)
       }
@@ -743,22 +804,26 @@ const handleVerbDropFromMouse = (card, verbId, fromDrawer = false) => {
 }
 
 // Ignite Action
-const igniteVerb = (verbId) => {
-  const verb = verbs.value.find(v => v.id === verbId)
-  if (verb.state !== 'READY') return
+const igniteVerb = (verbInstanceId) => {
+  const verbInstance = canvasVerbs.value.find(cv => cv.instanceId === verbInstanceId)
+  if (!verbInstance || verbInstance.state !== 'READY') return
 
-  verb.state = 'IGNITED'
+  const verbDef = verbDefinitions.value.find(v => v.id === verbInstance.definitionId)
+  if (!verbDef) return
+
+  verbInstance.state = 'IGNITED'
   
-  const consumedCard = slottedCards.value[verbId][0]
+  const consumedCard = verbInstance.slottedCards[0]
   
   // Add to running tasks
   const taskId = `task-${Date.now()}`
   const taskDuration = Math.floor(Math.random() * 30 + 30) // 30-60 seconds
   runningTasks.value.push({
     id: taskId,
-    verbId: verb.id,
-    verbLabel: verb.label,
-    verbIcon: verb.icon,
+    verbInstanceId: verbInstance.instanceId,
+    verbDefinitionId: verbDef.id,
+    verbLabel: verbDef.label,
+    verbIcon: verbDef.icon,
     cardLabel: consumedCard?.label || 'Unknown',
     cardType: consumedCard?.type || 'unknown',
     startTime: Date.now(),
@@ -777,8 +842,8 @@ const igniteVerb = (verbId) => {
 
   // Simulate processing time
   setTimeout(() => {
-    verb.state = 'IDLE'
-    slottedCards.value[verbId] = [] // clear slot (destroy original card)
+    verbInstance.state = 'IDLE'
+    verbInstance.slottedCards = [] // clear slot (destroy original card)
     
     // Remove from running tasks
     const taskIdx = runningTasks.value.findIndex(t => t.id === taskId)
@@ -900,24 +965,24 @@ const igniteVerb = (verbId) => {
           
           <!-- Verbs as draggable elements on canvas -->
           <div 
-            v-for="verb in verbs" 
-            :key="verb.id" 
-            :id="`verb-${verb.id}`"
+            v-for="instance in canvasVerbs" 
+            :key="instance.instanceId" 
+            :id="`verb-${instance.instanceId}`"
             class="absolute cursor-move"
-            :style="{ left: verb.x + 'px', top: verb.y + 'px' }"
-            @mousedown.stop="startDraggingVerb(verb, $event)"
+            :style="{ left: instance.x + 'px', top: instance.y + 'px' }"
+            @mousedown.stop="startDraggingVerb(getCanvasVerb(instance), $event)"
           >
             <Verb 
-              :verb="verb" 
-              :slottedCards="slottedCards[verb.id]"
-              :is-highlighted="highlightedVerbs.has(verb.id)"
-              :is-selected="selectedVerbId === verb.id"
+              :verb="getCanvasVerb(instance)" 
+              :slottedCards="instance.slottedCards"
+              :is-highlighted="highlightedVerbs.has(instance.definitionId)"
+              :is-selected="selectedVerbId === instance.instanceId"
               @drop="handleVerbDrop"
               @ignite="igniteVerb"
               @select="onVerbSelect"
             >
               <template #slotted-card="{ card }">
-                <Card :card="card" isSlot :isLocked="verb.state === 'IGNITED'" class="scale-90" />
+                <Card :card="card" isSlot :isLocked="instance.state === 'IGNITED'" class="scale-90" />
               </template>
             </Verb>
           </div>
@@ -1030,9 +1095,8 @@ const igniteVerb = (verbId) => {
               >
                 <Verb 
                   :verb="verb" 
-                  :slottedCards="slottedCards[verb.id]"
-                  :is-selected="selectedVerbId === verb.id"
                   :compact="true"
+                  :is-selected="selectedVerbId === verb.id"
                   @select="onVerbSelect"
                 />
               </div>
