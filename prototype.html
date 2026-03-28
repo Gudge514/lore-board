@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoreBoard Prototype</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            lore: {
+              bg: '#1a1a1a',
+              card: '#2a2a2a',
+              accent: '#d4af37', // Gold-ish for that mystic feel
+              danger: '#8b0000',
+              text: '#e0e0e0',
+              slot: '#111111',
+              border: '#333333'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #1a1a1a; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 4px 12px rgba(0,0,0,0.5); border-color: #d4af37; }
+    .slot-active { border-color: #d4af37; background-color: rgba(212, 175, 55, 0.1); }
+    .decay-bar { height: 4px; background: linear-gradient(90deg, #d4af37, #8b0000); animation: decay 10s linear infinite; }
+    @keyframes decay { from { width: 100%; } to { width: 0%; } }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col">
+  <div id="app" class="flex-1 flex flex-col h-full relative">
+    
+    <!-- Top Bar -->
+    <header class="h-14 border-b border-lore-border flex items-center justify-between px-6 bg-lore-bg z-10">
+      <div class="flex items-center gap-2 text-lore-accent font-semibold text-lg">
+        <i class="ph ph-moon-stars text-2xl"></i> LoreBoard
+      </div>
+      <div class="text-sm text-gray-400">桌面态 (Tabletop)</div>
+    </header>
+
+    <!-- Main Desktop -->
+    <main class="flex-1 relative p-8 flex gap-8">
+      
+      <!-- Verbs Area (The Workstations) -->
+      <div class="w-1/3 border-r border-lore-border pr-8 flex flex-col gap-6">
+        <h2 class="text-gray-400 text-sm tracking-widest uppercase mb-2">动词区域 (Verbs)</h2>
+        
+        <!-- Deep Research Verb -->
+        <div class="bg-lore-card border border-lore-border rounded-lg p-6 flex flex-col gap-4 shadow-lg">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full bg-lore-bg border-2 border-lore-accent flex items-center justify-center text-lore-accent text-xl shadow-[0_0_10px_rgba(212,175,55,0.3)]">
+                <i class="ph ph-magnifying-glass"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-lg">学术深度研究</h3>
+                <p class="text-xs text-gray-400">消耗算力与密钥，产出洞察报告。</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Slots -->
+          <div class="flex flex-col gap-3 mt-4">
+            <!-- Auth Slot -->
+            <div 
+              class="border-2 border-dashed border-lore-border rounded-md p-4 flex flex-col items-center justify-center min-h-[100px] transition-colors cursor-pointer hover:border-lore-accent"
+              :class="{ 'slot-active': selectedSlot === 'auth' }"
+              @click="selectedSlot = 'auth'"
+            >
+              <template v-if="slots.auth">
+                <div class="text-lore-accent"><i class="ph ph-key"></i> {{ slots.auth.name }}</div>
+                <div class="text-xs text-gray-500 mt-1" @click.stop="slots.auth = null">点击移除</div>
+              </template>
+              <template v-else>
+                <div class="text-gray-500 flex flex-col items-center">
+                  <i class="ph ph-lock-key text-2xl mb-1"></i>
+                  <span class="text-xs">放入 [凭证]</span>
+                </div>
+              </template>
+            </div>
+
+            <!-- Context Slot -->
+            <div 
+              class="border-2 border-dashed border-lore-border rounded-md p-4 flex flex-col items-center justify-center min-h-[100px] transition-colors cursor-pointer hover:border-lore-accent"
+              :class="{ 'slot-active': selectedSlot === 'context' }"
+              @click="selectedSlot = 'context'"
+            >
+              <template v-if="slots.context">
+                <div class="text-blue-400"><i class="ph ph-file-text"></i> {{ slots.context.name }}</div>
+                <div class="text-xs text-gray-500 mt-1" @click.stop="slots.context = null">点击移除</div>
+              </template>
+              <template v-else>
+                <div class="text-gray-500 flex flex-col items-center">
+                  <i class="ph ph-file-text text-2xl mb-1"></i>
+                  <span class="text-xs">放入 [线索/文档]</span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <button 
+            class="mt-4 py-2 w-full rounded font-semibold transition-colors"
+            :class="isReady ? 'bg-lore-accent text-black hover:bg-yellow-500' : 'bg-lore-bg text-gray-600 cursor-not-allowed'"
+          >
+            {{ isReady ? '开始推演 (Start)' : '缺乏必要卡牌' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Cards Area (The Hand / Desk) -->
+      <div class="flex-1 flex flex-col">
+        <h2 class="text-gray-400 text-sm tracking-widest uppercase mb-4">散落的卡牌 (Cards on Table)</h2>
+        
+        <div class="flex flex-wrap gap-4 items-start content-start">
+          
+          <!-- Card Render Loop -->
+          <div 
+            v-for="card in availableCards" 
+            :key="card.id"
+            class="w-48 bg-lore-card border border-lore-border rounded-lg p-4 cursor-pointer card-hover transition-all flex flex-col shadow-md relative overflow-hidden"
+            @click="assignCard(card)"
+          >
+            <!-- Decay Bar if ephemeral -->
+            <div v-if="card.isEphemeral" class="absolute top-0 left-0 w-full decay-bar"></div>
+            
+            <div class="flex justify-between items-start mb-2 mt-1">
+              <i :class="getIcon(card.class)" class="text-xl" :style="{ color: getColor(card.class) }"></i>
+              <span class="text-[10px] uppercase px-2 py-0.5 rounded bg-lore-bg text-gray-400 border border-lore-border">{{ card.class }}</span>
+            </div>
+            
+            <h4 class="font-bold text-sm mb-1 text-gray-200">{{ card.name }}</h4>
+            <p class="text-xs text-gray-500 line-clamp-2 flex-1">{{ card.description }}</p>
+            
+            <div class="flex flex-wrap gap-1 mt-3">
+              <span v-for="tag in card.tags" class="text-[9px] px-1 py-0.5 bg-lore-slot rounded text-gray-400">
+                {{ tag }}
+              </span>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const { createApp, ref, computed } = Vue
+
+    createApp({
+      setup() {
+        // Mock Domain Data
+        const cardsOnTable = ref([
+          {
+            id: 'c1',
+            name: 'OpenAI API Token',
+            description: '蕴含着强大通用逻辑能力的凭证。',
+            class: 'secret',
+            tags: ['type:credential', 'provider:openai'],
+            isEphemeral: false
+          },
+          {
+            id: 'c2',
+            name: 'FluxA 架构文档',
+            description: '从暗网角落搜集到的残缺手稿。',
+            class: 'static',
+            tags: ['type:document', 'topic:crypto'],
+            isEphemeral: false
+          },
+          {
+            id: 'c3',
+            name: 'Brave Search Session',
+            description: '临时的搜索通道，沙漏正在流逝。',
+            class: 'dynamic',
+            tags: ['type:credential', 'provider:search'],
+            isEphemeral: true
+          },
+          {
+            id: 'c4',
+            name: '429 Rate Limit',
+            description: '过度贪婪的惩罚，需要时间来消除。',
+            class: 'error',
+            tags: ['status:blocked'],
+            isEphemeral: true
+          }
+        ])
+
+        const slots = ref({
+          auth: null,
+          context: null
+        })
+
+        const selectedSlot = ref(null)
+
+        const availableCards = computed(() => {
+          return cardsOnTable.value.filter(c => 
+            slots.value.auth?.id !== c.id && 
+            slots.value.context?.id !== c.id
+          )
+        })
+
+        const isReady = computed(() => {
+          return slots.value.auth !== null && slots.value.context !== null
+        })
+
+        const getIcon = (cls) => {
+          const map = {
+            'secret': 'ph-key',
+            'static': 'ph-book-bookmark',
+            'dynamic': 'ph-lightning',
+            'error': 'ph-warning-circle'
+          }
+          return map[cls] || 'ph-cards'
+        }
+
+        const getColor = (cls) => {
+          const map = {
+            'secret': '#d4af37', // Gold
+            'static': '#a8b2d1', // Slate
+            'dynamic': '#64ffda', // Teal
+            'error': '#ff6b6b'   // Red
+          }
+          return map[cls] || '#ffffff'
+        }
+
+        const assignCard = (card) => {
+          if (!selectedSlot.value) {
+            alert('请先点击左侧的某个插槽（框框），再点击卡牌放入！')
+            return
+          }
+          
+          // Basic constraint mock: if auth slot, needs secret/dynamic credential
+          if (selectedSlot.value === 'auth') {
+            if (!card.tags.includes('type:credential')) {
+              alert('契约不符：该插槽需要 [凭证] 类卡牌。')
+              return
+            }
+          }
+
+          slots.value[selectedSlot.value] = card
+          selectedSlot.value = null // reset selection
+        }
+
+        return {
+          cardsOnTable,
+          slots,
+          selectedSlot,
+          availableCards,
+          isReady,
+          getIcon,
+          getColor,
+          assignCard
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>

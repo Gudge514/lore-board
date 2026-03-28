@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoreBoard - Infinite Canvas Prototype</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            lore: {
+              bg: '#121212',
+              board: '#1a1a1a',
+              card: '#242424',
+              accent: '#d4af37',
+              border: '#333333',
+              slot: '#0a0a0a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #121212; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; margin: 0; user-select: none; }
+    
+    /* 桌面网格背景 */
+    .tabletop-bg {
+      background-color: #1a1a1a;
+      background-image: radial-gradient(circle at 50% 50%, #333 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    
+    .entity {
+      position: absolute;
+      transform: translate(-50%, -50%); /* 居中定位 */
+      will-change: transform, left, top;
+    }
+    
+    .card-hover:hover { box-shadow: 0 0 15px rgba(212,175,55,0.2); border-color: #d4af37; }
+    .is-dragging { z-index: 100 !important; cursor: grabbing !important; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
+    .card { width: 140px; min-height: 180px; transition: box-shadow 0.2s, border-color 0.2s; }
+    .verb { width: 220px; border-radius: 12px; }
+    
+    .slot { border: 2px dashed #333; transition: all 0.2s; }
+    .slot.active { border-color: #d4af37; background: rgba(212,175,55,0.05); }
+    .slot.filled { border: 1px solid #d4af37; border-style: solid; }
+  </style>
+</head>
+<body>
+  <div id="app" class="w-screen h-screen relative overflow-hidden bg-lore-bg"
+       @pointerdown="onBoardDown"
+       @pointermove="onPointerMove"
+       @pointerup="onPointerUp"
+       @pointerleave="onPointerUp"
+       @wheel="onWheel">
+    
+    <!-- UI Overlay (Fixed) -->
+    <header class="absolute top-0 left-0 w-full h-14 border-b border-lore-border flex items-center justify-between px-6 bg-lore-bg/90 backdrop-blur z-50">
+      <div class="flex items-center gap-2 text-lore-accent font-semibold text-lg">
+        <i class="ph ph-moon-stars text-2xl"></i> LoreBoard Canvas
+      </div>
+      <div class="text-sm text-gray-400 flex gap-4">
+        <span>缩放: {{ Math.round(board.scale * 100) }}%</span>
+        <span>坐标: {{ Math.round(board.x) }}, {{ Math.round(board.y) }}</span>
+      </div>
+    </header>
+
+    <!-- Infinite Board -->
+    <div class="tabletop-bg absolute top-0 left-0 w-full h-full"
+         :style="{ transform: `translate(${board.x}px, ${board.y}px) scale(${board.scale})`, transformOrigin: '0 0' }">
+      
+      <!-- Verbs -->
+      <div v-for="verb in verbs" :key="verb.id"
+           class="entity verb bg-lore-card border-2 border-lore-border shadow-xl flex flex-col cursor-grab"
+           :class="{ 'is-dragging': draggedEntity?.id === verb.id }"
+           :style="{ left: verb.x + 'px', top: verb.y + 'px', zIndex: verb.zIndex }"
+           @pointerdown.stop="onEntityDown($event, verb, 'verb')">
+        
+        <!-- Verb Header -->
+        <div class="p-4 border-b border-lore-border flex items-center gap-3 bg-black/20 rounded-t-xl">
+          <div class="w-10 h-10 rounded-full bg-lore-bg border border-lore-accent flex items-center justify-center text-lore-accent text-lg shadow-[0_0_10px_rgba(212,175,55,0.3)]">
+            <i class="ph ph-magnifying-glass"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-gray-100">{{ verb.name }}</h3>
+          </div>
+        </div>
+
+        <!-- Slots -->
+        <div class="p-4 flex flex-col gap-3">
+          <div v-for="(slot, slotId) in verb.slots" :key="slotId"
+               class="slot h-16 rounded flex items-center justify-center relative"
+               :class="{ 'filled': slot.card }">
+            
+            <template v-if="slot.card">
+              <!-- Inline mini-card representation -->
+              <div class="w-full h-full bg-lore-board flex items-center px-3 justify-between"
+                   @pointerdown.stop="extractCard($event, verb, slotId)">
+                <div class="flex items-center gap-2">
+                  <i class="ph ph-key text-lore-accent" v-if="slot.card.class === 'secret'"></i>
+                  <i class="ph ph-file-text text-blue-400" v-else></i>
+                  <span class="text-xs font-semibold truncate">{{ slot.card.name }}</span>
+                </div>
+                <i class="ph ph-arrows-out-line-horizontal text-gray-500 hover:text-white cursor-pointer"></i>
+              </div>
+            </template>
+            <template v-else>
+              <div class="text-gray-500 text-xs flex flex-col items-center">
+                <span>{{ slot.name }}</span>
+              </div>
+            </template>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Cards -->
+      <div v-for="card in cardsOnTable" :key="card.id"
+           class="entity card bg-lore-card border border-lore-border rounded-md p-3 cursor-grab card-hover flex flex-col"
+           :class="{ 'is-dragging': draggedEntity?.id === card.id }"
+           :style="{ left: card.x + 'px', top: card.y + 'px', zIndex: card.zIndex }"
+           @pointerdown.stop="onEntityDown($event, card, 'card')">
+        
+        <div class="flex justify-between items-start mb-2">
+          <i class="ph ph-key text-lore-accent text-lg" v-if="card.class === 'secret'"></i>
+          <i class="ph ph-file-text text-blue-400 text-lg" v-if="card.class === 'static'"></i>
+          <span class="text-[9px] uppercase px-1.5 py-0.5 rounded bg-lore-bg text-gray-400 border border-lore-border">{{ card.class }}</span>
+        </div>
+        
+        <h4 class="font-bold text-sm mb-1 text-gray-200 mt-2">{{ card.name }}</h4>
+        <div class="flex-1"></div>
+        
+        <div class="flex flex-wrap gap-1 mt-2">
+          <span v-for="tag in card.tags" class="text-[9px] px-1 py-0.5 bg-lore-slot rounded text-gray-500">
+            {{ tag }}
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, onMounted, onUnmounted } = Vue
+
+    createApp({
+      setup() {
+        const board = ref({ x: 0, y: 0, scale: 1 });
+        let isPanning = false;
+        let globalZIndex = 10;
+
+        const verbs = ref([
+          {
+            id: 'v1', name: '学术深度研究', x: 400, y: 300, zIndex: 1,
+            slots: {
+              auth: { name: '放入 [凭证]', card: null },
+              context: { name: '放入 [线索]', card: null }
+            }
+          }
+        ]);
+
+        const cardsOnTable = ref([
+          { id: 'c1', name: 'OpenAI API Key', class: 'secret', tags: ['credential'], x: 800, y: 200, zIndex: 2 },
+          { id: 'c2', name: 'FluxA 白皮书', class: 'static', tags: ['document'], x: 850, y: 450, zIndex: 3 },
+          { id: 'c3', name: 'Brave Search', class: 'secret', tags: ['credential'], x: 700, y: 320, zIndex: 4 }
+        ]);
+
+        const draggedEntity = ref(null);
+        let dragOffset = { x: 0, y: 0 };
+
+        const onBoardDown = (e) => {
+          isPanning = true;
+        };
+
+        const onWheel = (e) => {
+          e.preventDefault();
+          const zoomSensitivity = 0.001;
+          const delta = -e.deltaY * zoomSensitivity;
+          let newScale = board.value.scale * Math.exp(delta);
+          newScale = Math.max(0.2, Math.min(newScale, 3));
+          
+          const rect = document.body.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+          
+          board.value.x = mouseX - (mouseX - board.value.x) * (newScale / board.value.scale);
+          board.value.y = mouseY - (mouseY - board.value.y) * (newScale / board.value.scale);
+          board.value.scale = newScale;
+        };
+
+        const onEntityDown = (e, entity, type) => {
+          entity.zIndex = ++globalZIndex;
+          draggedEntity.value = { entity, type };
+          
+          const scaledX = (e.clientX - board.value.x) / board.value.scale;
+          const scaledY = (e.clientY - board.value.y) / board.value.scale;
+          dragOffset.x = scaledX - entity.x;
+          dragOffset.y = scaledY - entity.y;
+        };
+
+        const onPointerMove = (e) => {
+          if (draggedEntity.value) {
+            const scaledX = (e.clientX - board.value.x) / board.value.scale;
+            const scaledY = (e.clientY - board.value.y) / board.value.scale;
+            draggedEntity.value.entity.x = scaledX - dragOffset.x;
+            draggedEntity.value.entity.y = scaledY - dragOffset.y;
+          } else if (isPanning) {
+            board.value.x += e.movementX;
+            board.value.y += e.movementY;
+          }
+        };
+
+        const onPointerUp = (e) => {
+          isPanning = false;
+          
+          if (draggedEntity.value) {
+            const { entity, type } = draggedEntity.value;
+            
+            if (type === 'card') {
+              for (const verb of verbs.value) {
+                const dist = Math.hypot(entity.x - verb.x, entity.y - verb.y);
+                if (dist < 150) {
+                  const emptySlotId = Object.keys(verb.slots).find(k => !verb.slots[k].card);
+                  if (emptySlotId) {
+                    verb.slots[emptySlotId].card = entity;
+                    cardsOnTable.value = cardsOnTable.value.filter(c => c.id !== entity.id);
+                    break;
+                  }
+                }
+              }
+            }
+            draggedEntity.value = null;
+          }
+        };
+
+        const extractCard = (e, verb, slotId) => {
+          const card = verb.slots[slotId].card;
+          if (card) {
+            verb.slots[slotId].card = null;
+            card.x = verb.x + 180;
+            card.y = verb.y;
+            card.zIndex = ++globalZIndex;
+            cardsOnTable.value.push(card);
+            
+            // Wait for DOM update before starting drag on new element
+            setTimeout(() => onEntityDown(e, card, 'card'), 0);
+          }
+        };
+
+        onMounted(() => {
+          board.value.x = window.innerWidth / 2 - 400;
+          board.value.y = window.innerHeight / 2 - 300;
+          window.addEventListener('pointermove', onPointerMove);
+          window.addEventListener('pointerup', onPointerUp);
+        });
+
+        onUnmounted(() => {
+          window.removeEventListener('pointermove', onPointerMove);
+          window.removeEventListener('pointerup', onPointerUp);
+        });
+
+        return {
+          board,
+          verbs,
+          cardsOnTable,
+          draggedEntity,
+          onBoardDown,
+          onPointerMove,
+          onPointerUp,
+          onWheel,
+          onEntityDown,
+          extractCard
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
