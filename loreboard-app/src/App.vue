@@ -639,6 +639,7 @@ const igniteVerb = (verbId) => {
             <Verb 
               :verb="verb" 
               :slottedCards="slottedCards[verb.id]"
+              :is-highlighted="highlightedVerbs.has(verb.id)"
               @drop="handleVerbDrop"
               @ignite="igniteVerb"
             >
