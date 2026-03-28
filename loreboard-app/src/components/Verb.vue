@@ -60,15 +60,15 @@ const rejectDrop = () => {
   }, 500) // Duration of the shake animation
 }
 
-// Verb colors - Black & Orange theme
+// Verb colors - Black & Orange theme with 80% opacity backgrounds
 const verbColors = {
-  study: 'border-orange-500/50 bg-orange-900/10 shadow-orange-900/40',
-  work: 'border-orange-400/50 bg-orange-900/5 shadow-orange-900/30',
-  explore: 'border-amber-500/50 bg-amber-900/10 shadow-amber-900/40',
-  nemesis: 'border-red-500/50 bg-red-900/10 shadow-red-900/40'
+  study: 'border-orange-500/50 bg-orange-900/10 shadow-orange-900/30',
+  work: 'border-orange-400/50 bg-orange-900/5 shadow-orange-900/20',
+  explore: 'border-amber-500/50 bg-amber-900/10 shadow-amber-900/30',
+  nemesis: 'border-red-500/50 bg-red-900/10 shadow-red-900/30'
 }
 
-const colorClass = computed(() => verbColors[props.verb.type] || 'border-zinc-600/50 bg-zinc-900/50')
+const colorClass = computed(() => verbColors[props.verb.type] || 'border-zinc-600/50 bg-zinc-900/10')
 </script>
 
 <template>
@@ -76,8 +76,11 @@ const colorClass = computed(() => verbColors[props.verb.type] || 'border-zinc-60
     class="relative w-48 min-h-[160px] p-4 rounded-xl border-2 transition-all duration-300 flex flex-col items-center justify-start gap-4"
     :class="[
       colorClass, 
-      isDragOver && !isRejected ? 'ring-4 ring-orange-500/50 scale-[1.02] bg-zinc-800' : 'ring-1 ring-zinc-800',
-      isRejected ? 'ring-4 ring-red-500 border-red-500 animate-[shake_0.5s_ease-in-out]' : ''
+      'bg-opacity-80 backdrop-blur-sm',
+      'shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40',
+      isDragOver && !isRejected ? 'ring-4 ring-orange-500/50 scale-[1.02] bg-zinc-800/80' : 'ring-1 ring-zinc-800',
+      isRejected ? 'ring-4 ring-red-500 border-red-500 animate-[shake_0.5s_ease-in-out]' : '',
+      verb.state === 'READY' ? 'ring-2 ring-orange-400/50 shadow-orange-900/40' : ''
     ]"
     @dragover="handleDragOver"
     @dragleave="handleDragLeave"
