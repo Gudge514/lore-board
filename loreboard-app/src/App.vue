@@ -57,7 +57,7 @@ const onCardSelect = ({ cardId }) => {
   console.log('Card selected:', selectedCardId.value)
 }
 
-const onVerbSelect = ({ verbId, selected }) => {
+const onVerbSelect = ({ verbId }) => {
   // Deselect card when selecting verb
   selectedCardId.value = null
   
@@ -743,8 +743,10 @@ const igniteVerb = (verbId) => {
               :verb="verb" 
               :slottedCards="slottedCards[verb.id]"
               :is-highlighted="highlightedVerbs.has(verb.id)"
+              :is-selected="selectedVerbId === verb.id"
               @drop="handleVerbDrop"
               @ignite="igniteVerb"
+              @select="onVerbSelect"
             >
               <template #slotted-card="{ card }">
                 <Card :card="card" isSlot :isLocked="verb.state === 'IGNITED'" class="scale-90" />

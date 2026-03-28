@@ -63,7 +63,8 @@ const rejectDrop = () => {
 }
 
 const handleClick = (e) => {
-  emit('select', { verbId: props.verb.id, selected: !props.isSelected })
+  e.stopPropagation()
+  emit('select', { verbId: props.verb.id })
   emit('click', e)
 }
 
