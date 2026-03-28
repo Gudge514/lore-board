@@ -37,6 +37,9 @@ const slottedCards = ref({
   v1: [], v2: [], v3: []
 })
 
+// 4b. Running tasks (for left sidebar display)
+const runningTasks = ref([])
+
 // 5. Global selection state - only one card can be selected at a time
 const selectedCardId = ref(null)
 const selectedVerbId = ref(null)
@@ -740,21 +743,52 @@ const igniteVerb = (verbId) => {
   verb.state = 'IGNITED'
   
   const consumedCard = slottedCards.value[verbId][0]
+  
+  // Add to running tasks
+  const taskId = `task-${Date.now()}`
+  const taskDuration = Math.floor(Math.random() * 30 + 30) // 30-60 seconds
+  runningTasks.value.push({
+    id: taskId,
+    verbId: verb.id,
+    verbLabel: verb.label,
+    verbIcon: verb.icon,
+    cardLabel: consumedCard?.label || 'Unknown',
+    cardType: consumedCard?.type || 'unknown',
+    startTime: Date.now(),
+    duration: taskDuration * 1000, // convert to ms
+    progress: 0
+  })
+  
+  // Update progress periodically
+  const progressInterval = setInterval(() => {
+    const task = runningTasks.value.find(t => t.id === taskId)
+    if (task) {
+      const elapsed = Date.now() - task.startTime
+      task.progress = Math.min(100, Math.round((elapsed / task.duration) * 100))
+    }
+  }, 500)
 
   // Simulate processing time
   setTimeout(() => {
     verb.state = 'IDLE'
     slottedCards.value[verbId] = [] // clear slot (destroy original card)
     
+    // Remove from running tasks
+    const taskIdx = runningTasks.value.findIndex(t => t.id === taskId)
+    if (taskIdx > -1) {
+      runningTasks.value.splice(taskIdx, 1)
+    }
+    clearInterval(progressInterval)
+    
     // Spawn result card onto tabletop
     tabletopCards.value.push({
       id: `res-${Date.now()}`,
       type: 'static',
-      label: `Result from: ${consumedCard.label}`,
+      label: `Result from: ${consumedCard?.label || 'Unknown'}`,
       aspects: ['knowledge', 'refined'],
       duration: null
     })
-  }, 3000)
+  }, taskDuration * 1000)
 }
 </script>
 
@@ -776,28 +810,49 @@ const igniteVerb = (verbId) => {
     <!-- Main Workspace -->
     <main class="flex-1 flex overflow-hidden">
       
-      <!-- Left Panel: Verb List -->
-      <aside class="w-64 border-r border-zinc-800 bg-zinc-950/30 p-4 flex flex-col gap-6 overflow-y-auto z-10 overflow-x-visible">
-        <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-2">Available Rituals</h2>
+      <!-- Left Panel: Running Tasks -->
+      <aside class="w-64 border-r border-zinc-800 bg-zinc-950/30 p-4 flex flex-col gap-4 overflow-y-auto z-10">
+        <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-bold">Running Tasks</h2>
         
-        <Verb 
-          v-for="verb in verbs" 
-          :key="verb.id" 
-          :verb="verb" 
-          :slottedCards="slottedCards[verb.id]"
-          :is-highlighted="highlightedVerbs.has(verb.id)"
-          :is-selected="selectedVerbId === verb.id"
-          @drop="handleVerbDrop"
-          @ignite="igniteVerb"
-          @select="onVerbSelect"
-          class="shrink-0"
-        >
-          <!-- Using scoped slot to render the Card component inside the Verb -->
-          <template #slotted-card="{ card }">
-            <!-- T-06: Absolute Lock if ignited -->
-            <Card :card="card" isSlot :isLocked="verb.state === 'IGNITED'" class="scale-90" />
-          </template>
-        </Verb>
+        <!-- Task list -->
+        <div class="flex flex-col gap-3">
+          <div 
+            v-for="task in runningTasks" 
+            :key="task.id"
+            class="bg-zinc-900/50 border border-zinc-700/50 rounded-lg p-3 transition-all hover:border-orange-400/30"
+          >
+            <!-- Task header -->
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-lg">{{ task.verbIcon }}</span>
+              <span class="text-xs font-medium text-zinc-300">{{ task.verbLabel }}</span>
+            </div>
+            
+            <!-- Task info -->
+            <div class="text-xs text-zinc-400 mb-2">
+              <span class="text-zinc-500">Processing:</span>
+              <span class="text-zinc-300 ml-1">{{ task.cardLabel }}</span>
+            </div>
+            
+            <!-- Progress bar -->
+            <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+              <div 
+                class="h-full bg-gradient-to-r from-orange-500 to-orange-400 transition-all duration-500"
+                :style="{ width: task.progress + '%' }"
+              ></div>
+            </div>
+            
+            <!-- Progress text -->
+            <div class="flex justify-between mt-1 text-[10px] text-zinc-500">
+              <span>{{ Math.floor(task.duration / 1000) }}s</span>
+              <span>{{ task.progress }}%</span>
+            </div>
+          </div>
+          
+          <!-- Empty state -->
+          <div v-if="runningTasks.length === 0" class="text-center py-8 text-zinc-600 text-sm italic">
+            No running tasks
+          </div>
+        </div>
       </aside>
 
       <!-- Center Panel: The Tabletop Canvas -->
