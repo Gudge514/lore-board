@@ -827,13 +827,13 @@ const igniteVerb = (verbId) => {
 
     <!-- Bottom Panel: iOS-style Drawer -->
     <footer 
-      class="fixed bottom-0 left-0 right-0 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 z-30 transition-all duration-300 ease-out overflow-hidden"
+      class="fixed bottom-0 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 z-30 transition-all duration-300 ease-out overflow-hidden"
       :style="{ 
         height: isDrawerOpen ? `${drawerOpenHeight}px` : `${drawerClosedHeight}px`,
-        maxWidth: 'calc(100vw - 32px)',
-        width: 'calc(100vw - 32px)',
-        left: '16px',
-        right: '16px',
+        maxWidth: 'calc(100vw - 128px)',
+        width: 'calc(100vw - 128px)',
+        left: '64px',
+        right: '64px',
         borderRadius: isDrawerOpen ? '16px 16px 0 0' : '16px 16px 0 0'
       }"
     >
