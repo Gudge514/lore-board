@@ -50,8 +50,10 @@ const onMouseMove = (event) => {
   if (!canvas || !container) return
   
   const containerRect = container.getBoundingClientRect()
-  const mouseX = event.clientX - containerRect.left
-  const mouseY = event.clientY - containerRect.top
+  
+  // Account for zoom: divide mouse position by zoom level
+  const mouseX = (event.clientX - containerRect.left - panOffset.value.x) / zoomLevel.value
+  const mouseY = (event.clientY - containerRect.top - panOffset.value.y) / zoomLevel.value
   
   // Update position based on drag type
   if (draggedItem.value.type === 'card') {
@@ -178,8 +180,10 @@ const startDraggingCard = (card, event) => {
   if (!canvas || !container) return
   
   const containerRect = container.getBoundingClientRect()
-  const mouseX = event.clientX - containerRect.left
-  const mouseY = event.clientY - containerRect.top
+  
+  // Calculate mouse position in canvas coordinates (accounting for pan and zoom)
+  const mouseX = (event.clientX - containerRect.left - panOffset.value.x) / zoomLevel.value
+  const mouseY = (event.clientY - containerRect.top - panOffset.value.y) / zoomLevel.value
   
   // Check if dragging from drawer or tabletop
   // IMPORTANT: Check tabletop FIRST - a card can be in both drawer (as source) and tabletop (as instance)
@@ -190,9 +194,9 @@ const startDraggingCard = (card, event) => {
   const el = event.currentTarget
   const elRect = el.getBoundingClientRect()
   
-  // Calculate offset: mouse position relative to element's top-left corner (in screen coords)
-  const offsetX = event.clientX - elRect.left
-  const offsetY = event.clientY - elRect.top
+  // Calculate offset in canvas coordinates (accounting for zoom)
+  const offsetX = (event.clientX - elRect.left) / zoomLevel.value
+  const offsetY = (event.clientY - elRect.top) / zoomLevel.value
   
   if (isFromDrawer) {
     // Create a TEMPORARY independent copy for dragging
@@ -238,16 +242,18 @@ const startDraggingVerb = (verb, event) => {
   if (!canvas || !container) return
   
   const containerRect = container.getBoundingClientRect()
-  const mouseX = event.clientX - containerRect.left
-  const mouseY = event.clientY - containerRect.top
+  
+  // Calculate mouse position in canvas coordinates (accounting for pan and zoom)
+  const mouseX = (event.clientX - containerRect.left - panOffset.value.x) / zoomLevel.value
+  const mouseY = (event.clientY - containerRect.top - panOffset.value.y) / zoomLevel.value
   
   // Get the actual DOM element
   const el = event.currentTarget
   const elRect = el.getBoundingClientRect()
-  const elX = elRect.left - containerRect.left
-  const elY = elRect.top - containerRect.top
   
-  // Calculate offset FIRST (before any position changes)
+  // Calculate element position and offset in canvas coordinates (accounting for zoom)
+  const elX = (elRect.left - containerRect.left - panOffset.value.x) / zoomLevel.value
+  const elY = (elRect.top - containerRect.top - panOffset.value.y) / zoomLevel.value
   const offsetX = mouseX - elX
   const offsetY = mouseY - elY
   
