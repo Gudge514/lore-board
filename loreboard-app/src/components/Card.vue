@@ -5,7 +5,8 @@ const props = defineProps({
   card: { type: Object, required: true },
   isSlot: { type: Boolean, default: false },
   isLocked: { type: Boolean, default: false },
-  isSelected: { type: Boolean, default: false }
+  isSelected: { type: Boolean, default: false },
+  compact: { type: Boolean, default: false } // Compact mode for drawer
 })
 
 const emit = defineEmits(['click', 'select'])
@@ -32,44 +33,50 @@ const colorClass = computed(() => typeColors[props.card.type] || typeColors.stat
 <template>
   <div 
     :class="[
-      'relative flex flex-col justify-between p-3 rounded-lg border transition-all duration-200 group',
+      'relative flex flex-col rounded-lg border transition-all duration-200 group',
       'bg-opacity-80 backdrop-blur-sm',
       'shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40',
-      isSlot ? 'w-full h-full' : 'w-full min-h-[100px]',
+      compact ? 'h-36 p-2' : 'min-h-[100px] p-3',
+      isSlot ? 'w-full h-full' : 'w-full',
       isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-grab active:cursor-grabbing hover:-translate-y-1',
       isSelected ? 'outline outline-2 outline-orange-400/50 outline-offset-2' : '',
       colorClass
     ]"
     @click.stop="handleClick"
   >
-    <!-- Background pattern/noise -->
-    <div class="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMSIvPjxwYXRoIGQ9Ik0wIDBMOCA4Wk04IDBMMCA4WiIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')]"></div>
-
-    <div class="flex items-start justify-between z-10">
-      <div class="flex items-center gap-2">
-        <span class="text-xs font-bold uppercase tracking-widest text-zinc-400">
-          {{ card.type }}
-        </span>
-      </div>
+    <!-- Card Header: Type + Duration -->
+    <div class="flex items-start justify-between z-10 mb-2">
+      <span class="text-[10px] font-bold uppercase tracking-widest truncate" :class="compact ? 'text-zinc-500' : 'text-zinc-400'">
+        {{ card.type }}
+      </span>
       
-      <!-- Ephemeral Timer (if duration exists) -->
-      <div v-if="card.duration" class="flex items-center gap-1 text-xs text-orange-400/80 animate-pulse">
+      <!-- Ephemeral Timer -->
+      <div v-if="card.duration && !compact" class="flex items-center gap-1 text-xs text-orange-400/80 animate-pulse">
         ⏳ {{ card.duration }}s
       </div>
     </div>
 
-    <div class="mt-4 z-10">
-      <h3 class="font-medium text-zinc-100 text-sm break-words leading-tight">{{ card.label }}</h3>
+    <!-- Card Label -->
+    <div class="z-10 mb-2 flex-1 min-h-0">
+      <h3 
+        class="font-medium break-words leading-tight"
+        :class="compact ? 'text-xs text-zinc-300 line-clamp-2' : 'text-sm text-zinc-100 line-clamp-3'"
+      >
+        {{ card.label }}
+      </h3>
     </div>
 
     <!-- Aspect tags -->
-    <div class="mt-3 flex flex-wrap gap-1 z-10">
+    <div class="flex flex-wrap gap-1 z-10" :class="compact ? 'mt-auto' : 'mt-3'">
       <span 
-        v-for="aspect in card.aspects" 
+        v-for="aspect in card.aspects.slice(0, compact ? 3 : undefined)" 
         :key="aspect"
-        class="text-[10px] px-1.5 py-0.5 rounded-sm bg-zinc-950/50 border border-zinc-700/50 text-zinc-400"
+        class="text-[10px] px-1.5 py-0.5 rounded-sm bg-zinc-950/50 border border-zinc-700/50 text-zinc-400 truncate max-w-full"
       >
         {{ aspect }}
+      </span>
+      <span v-if="compact && card.aspects.length > 3" class="text-[10px] text-zinc-500">
+        +{{ card.aspects.length - 3 }}
       </span>
     </div>
 

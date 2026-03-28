@@ -1009,11 +1009,11 @@ const igniteVerb = (verbId) => {
               <div 
                 v-for="card in filteredDrawerCards" 
                 :key="card.id" 
-                class="w-48 shrink-0 transition-all hover:-translate-y-1 cursor-grab active:cursor-grabbing"
+                class="w-48 shrink-0 transition-all cursor-grab active:cursor-grabbing"
                 :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && draggedItem.originalCard.id === card.id }"
                 @mousedown.stop="startDraggingCard(card, $event)"
               >
-                <Card :card="card" :is-selected="selectedCardId === card.id" @select="onCardSelect" />
+                <Card :card="card" :is-selected="selectedCardId === card.id" :compact="true" @select="onCardSelect" />
               </div>
               <div v-if="filteredDrawerCards.length === 0" class="h-32 w-full flex items-center justify-center text-zinc-600 text-sm italic">
                 {{ drawerSearchQuery ? 'No matching cards' : 'No cards in this category' }}
@@ -1032,12 +1032,9 @@ const igniteVerb = (verbId) => {
                   :verb="verb" 
                   :slottedCards="slottedCards[verb.id]"
                   :is-selected="selectedVerbId === verb.id"
+                  :compact="true"
                   @select="onVerbSelect"
-                >
-                  <template #slotted-card="{ card }">
-                    <Card :card="card" isSlot :isLocked="verb.state === 'IGNITED'" class="scale-90" />
-                  </template>
-                </Verb>
+                />
               </div>
             </template>
             <div v-if="drawerActiveTab === 'verbs' && displayVerbs.length === 0" class="h-32 w-full flex items-center justify-center text-zinc-600 text-sm italic">

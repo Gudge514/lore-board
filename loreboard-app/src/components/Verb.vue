@@ -5,7 +5,8 @@ const props = defineProps({
   verb: { type: Object, required: true },
   slottedCards: { type: Array, default: () => [] },
   isHighlighted: { type: Boolean, default: false },
-  isSelected: { type: Boolean, default: false }
+  isSelected: { type: Boolean, default: false },
+  compact: { type: Boolean, default: false } // Compact mode for drawer
 })
 
 const emit = defineEmits(['drop', 'dragover', 'dragleave', 'select', 'click'])
@@ -81,6 +82,7 @@ const colorClass = computed(() => verbColors[props.verb.type] || 'border-zinc-60
 
 <template>
   <div 
+    v-if="!compact"
     class="relative w-48 min-h-[160px] p-4 rounded-xl border-2 transition-all duration-300 flex flex-col items-center justify-start gap-4 cursor-pointer"
     :class="[
       colorClass, 
@@ -140,6 +142,44 @@ const colorClass = computed(() => verbColors[props.verb.type] || 'border-zinc-60
     >
       Ignite
     </button>
+  </div>
+  
+  <!-- Compact mode for drawer - unified card style -->
+  <div 
+    v-else
+    class="relative w-48 h-36 p-2 rounded-lg border-2 transition-all duration-200 flex flex-col cursor-pointer"
+    :class="[
+      colorClass,
+      'bg-opacity-80 backdrop-blur-sm',
+      'shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-1',
+      isSelected ? 'outline outline-2 outline-orange-400/50 outline-offset-2' : ''
+    ]"
+    @click.stop="handleClick"
+  >
+    <!-- Icon + Label -->
+    <div class="flex items-center gap-2 mb-2">
+      <span class="text-2xl">{{ verb.icon }}</span>
+      <h3 class="font-bold text-xs text-zinc-100 line-clamp-2 flex-1">{{ verb.label }}</h3>
+    </div>
+    
+    <!-- Type badge -->
+    <span class="text-[10px] uppercase tracking-wider text-zinc-500 mb-2">
+      {{ verb.type }} Verb
+    </span>
+    
+    <!-- Required aspects -->
+    <div class="flex flex-wrap gap-1 mt-auto">
+      <span 
+        v-for="aspect in verb.requiredAspects.slice(0, 3)" 
+        :key="aspect"
+        class="text-[10px] px-1.5 py-0.5 rounded-sm bg-zinc-950/50 border border-zinc-700/50 text-zinc-400 truncate max-w-full"
+      >
+        {{ aspect }}
+      </span>
+      <span v-if="verb.requiredAspects.length > 3" class="text-[10px] text-zinc-500">
+        +{{ verb.requiredAspects.length - 3 }}
+      </span>
+    </div>
   </div>
 </template>
 
