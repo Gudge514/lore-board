@@ -6,10 +6,18 @@ const props = defineProps({
   slottedCards: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['drop', 'dragover', 'dragleave'])
+const emit = defineEmits(['drop', 'dragover', 'dragleave', 'select', 'click'])
 
 const isDragOver = ref(false)
 const isRejected = ref(false)
+const isSelected = ref(false)
+
+const handleClick = (e) => {
+  // Toggle selection
+  isSelected.value = !isSelected.value
+  emit('select', { verbId: props.verb.id, selected: isSelected.value })
+  emit('click', e)
+}
 
 const handleDragOver = (e) => {
   e.preventDefault()
@@ -73,28 +81,32 @@ const colorClass = computed(() => verbColors[props.verb.type] || 'border-zinc-60
 
 <template>
   <div 
-    class="relative w-48 min-h-[160px] p-4 rounded-xl border-2 transition-all duration-300 flex flex-col items-center justify-start gap-4"
+    class="relative w-48 min-h-[160px] p-4 rounded-xl border-2 transition-all duration-300 flex flex-col items-center justify-start gap-4 cursor-pointer"
     :class="[
       colorClass, 
       'bg-opacity-80 backdrop-blur-sm',
       'shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40',
       isDragOver && !isRejected ? 'ring-4 ring-orange-500/50 scale-[1.02] bg-zinc-800/80' : 'ring-1 ring-zinc-800',
       isRejected ? 'ring-4 ring-red-500 border-red-500 animate-[shake_0.5s_ease-in-out]' : '',
-      verb.state === 'READY' ? 'ring-2 ring-orange-400/50 shadow-orange-900/40' : ''
+      verb.state === 'READY' || isSelected ? 'ring-2 ring-orange-400/50 shadow-orange-900/40' : ''
     ]"
     @dragover="handleDragOver"
     @dragleave="handleDragLeave"
     @drop="handleDrop"
+    @click.stop="handleClick"
   >
     <!-- Background Icon / Title -->
     <div class="text-center w-full border-b border-zinc-700/50 pb-2 mb-2 pointer-events-none">
-      <span class="text-3xl opacity-80">{{ verb.icon }}</span>
+      <div class="flex items-center justify-center gap-1">
+        <span class="text-3xl opacity-80">{{ verb.icon }}</span>
+        <span v-if="isSelected" class="text-xs text-orange-400">✓</span>
+      </div>
       <h3 class="font-bold text-zinc-100 mt-1">{{ verb.label }}</h3>
       <p 
         class="text-[10px] mt-0.5 tracking-wider uppercase transition-colors"
-        :class="verb.state === 'READY' ? 'text-orange-400 font-bold' : 'text-zinc-500'"
+        :class="verb.state === 'READY' || isSelected ? 'text-orange-400 font-bold' : 'text-zinc-500'"
       >
-        {{ verb.state || 'IDLE' }}
+        {{ isSelected ? 'SELECTED' : (verb.state || 'IDLE') }}
       </p>
     </div>
 
