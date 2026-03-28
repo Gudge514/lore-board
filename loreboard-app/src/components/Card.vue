@@ -9,12 +9,12 @@ const props = defineProps({
 
 // Removed HTML5 drag events - using custom mouse drag in App.vue
 
-// Color mapping based on card type - Black & Orange theme
+// Color mapping based on card type - Black & Orange theme with 80% opacity backgrounds
 const typeColors = {
-  dynamic: 'border-orange-400/50 bg-orange-900/15 shadow-orange-900/40',
-  static: 'border-zinc-600/50 bg-zinc-800 shadow-zinc-900/50',
-  secret: 'border-amber-500/50 bg-amber-900/15 shadow-amber-900/40',
-  nemesis: 'border-red-500/50 bg-red-900/15 shadow-red-900/40'
+  dynamic: 'border-orange-400/50 bg-orange-900/12 shadow-orange-900/30',
+  static: 'border-zinc-600/50 bg-zinc-800/12 shadow-zinc-900/40',
+  secret: 'border-amber-500/50 bg-amber-900/12 shadow-amber-900/30',
+  nemesis: 'border-red-500/50 bg-red-900/12 shadow-red-900/30'
 }
 
 const colorClass = computed(() => typeColors[props.card.type] || typeColors.static)
@@ -24,8 +24,10 @@ const colorClass = computed(() => typeColors[props.card.type] || typeColors.stat
   <div 
     :class="[
       'relative flex flex-col justify-between p-3 rounded-lg border transition-all duration-200 group',
+      'bg-opacity-80 backdrop-blur-sm',
+      'shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40',
       isSlot ? 'w-full h-full' : 'w-full min-h-[100px]',
-      isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-grab active:cursor-grabbing hover:shadow-lg',
+      isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-grab active:cursor-grabbing hover:-translate-y-1',
       colorClass
     ]"
   >
