@@ -1,11 +1,22 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
   card: { type: Object, required: true },
   isSlot: { type: Boolean, default: false },
   isLocked: { type: Boolean, default: false }
 })
+
+const emit = defineEmits(['click', 'select'])
+
+const isSelected = ref(false)
+
+const handleClick = (e) => {
+  e.stopPropagation()
+  isSelected.value = !isSelected.value
+  emit('select', { cardId: props.card.id, selected: isSelected.value })
+  emit('click', e)
+}
 
 // Removed HTML5 drag events - using custom mouse drag in App.vue
 
@@ -28,8 +39,10 @@ const colorClass = computed(() => typeColors[props.card.type] || typeColors.stat
       'shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40',
       isSlot ? 'w-full h-full' : 'w-full min-h-[100px]',
       isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-grab active:cursor-grabbing hover:-translate-y-1',
+      isSelected ? 'outline outline-2 outline-orange-400/50 outline-offset-2' : '',
       colorClass
     ]"
+    @click.stop="handleClick"
   >
     <!-- Background pattern/noise -->
     <div class="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMSIvPjxwYXRoIGQ9Ik0wIDBMOCA4Wk04IDBMMCA4WiIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')]"></div>
