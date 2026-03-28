@@ -104,10 +104,6 @@ const allVerbs = computed(() => {
   return verbList
 })
 
-const toggleDrawer = () => {
-  isDrawerOpen.value = !isDrawerOpen.value
-}
-
 const startDrawerDrag = (event) => {
   isDraggingDrawer.value = true
   drawerDragStart.value = {
