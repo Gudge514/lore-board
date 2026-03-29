@@ -1084,7 +1084,7 @@ const igniteVerb = (verbInstanceId) => {
                 v-for="card in filteredDrawerCards" 
                 :key="card.instanceId" 
                 class="w-48 shrink-0 transition-all cursor-grab active:cursor-grabbing"
-                :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && draggedItem.originalCard.instanceId === card.id }"
+                :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && draggedItem.originalCard.instanceId === card.instanceId || draggedItem.originalCard.id === card.id }"
                 @mousedown.stop="startDraggingCard(card, $event)"
               >
                 <Card :card="card" :is-selected="selectedCardId === card.instanceId" :compact="true" @select="onCardSelect" />
