@@ -324,14 +324,17 @@ const onMouseMove = (event) => {
 
 // Update verb highlights based on dragged card
 const updateVerbHighlights = (card) => {
-  const validVerbs = new Set()
-  verbs.value.forEach(verb => {
-    if (verb.state !== 'IGNITED' && canCardFitVerb(card, verb)) {
-      validVerbs.add(verb.id)
-    }
-  })
-  highlightedVerbs.value = validVerbs
-}
+    const validVerbs = new Set()
+    canvasVerbs.value.forEach(cv => {
+      if (cv.state !== 'IGNITED') {
+        const verbDef = verbDefinitions.value.find(v => v.id === cv.definitionId)
+        if (verbDef && canCardFitVerb(card, verbDef)) {
+          validVerbs.add(cv.instanceId)
+        }
+      }
+    })
+    highlightedVerbs.value = validVerbs
+  }
 
 // Unified mouse up handler - cleans up and handles drop logic
 const onMouseUp = (event) => {
