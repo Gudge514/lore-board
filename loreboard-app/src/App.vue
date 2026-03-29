@@ -453,9 +453,9 @@ const onMouseUp = (event) => {
 const cleanupDrag = () => {
   draggedItem.value = null
   highlightedVerbs.value = new Set()
-  window.removeEventListener('mousemove', onDrawerResizeMove)
-  window.removeEventListener('mouseup', onMouseUp)
-}
+  window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseup', onMouseUp)
+  }
 
 const startDraggingCard = (card, event) => {
   // Prevent multiple drag handlers
@@ -647,7 +647,7 @@ const startResizingDrawer = (e) => {
   }
   
   const onMouseUp = () => {
-    window.removeEventListener('mousemove', onDrawerResizeMove)
+    window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('mouseup', onMouseUp)
   }
   
