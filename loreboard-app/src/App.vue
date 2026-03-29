@@ -60,7 +60,15 @@ const drawerDragStart = ref({ y: 0, height: 0 })
 const drawerSearchQuery = ref('')
 const drawerActiveTab = ref('all') // 'all', 'dynamic', 'static', 'secret', 'nemesis', 'verbs'
 
-const toggleDrawer = () => {
+window.debugState = () => {
+    console.log('--- Canvas State Report ---');
+    console.log('DrawerResources (Templates):', drawerResources.value.length);
+    console.log('TabletopEntities (Instances):', tabletopEntities.value.length);
+    tabletopEntities.value.forEach((e, i) => {
+        console.log(`[${i}] ${e.entityType} - ID: ${e.instanceId}, Definition: ${e.definitionId}, Pos: (${e.x}, ${e.y})`);
+    });
+  };
+  const toggleDrawer = () => {
   isDrawerOpen.value = !isDrawerOpen.value
 }
 
