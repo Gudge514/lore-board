@@ -196,7 +196,7 @@ const handleKeyDown = (event) => {
     // Try to remove from tabletop
     const tableIdx = tabletopEntities.value.findIndex(c => c.instanceId === selectedCardId.value)
     if (tableIdx > -1) {
-      tabletopCards.value.splice(tableIdx, 1)
+      tabletopEntities.value.splice(tableIdx, 1)
       selectedCardId.value = null
       console.log('Card deleted from tabletop')
       return
@@ -429,7 +429,7 @@ const onMouseUp = (event) => {
             // From tabletop: remove from tabletop (card returns to drawer)
             const tableIdx = tabletopEntities.value.findIndex(c => c.instanceId === originalCard.id)
             if (tableIdx > -1) {
-              tabletopCards.value.splice(tableIdx, 1)
+              tabletopEntities.value.splice(tableIdx, 1)
             }
             cleanupDrag()
           }
@@ -480,7 +480,7 @@ const startDraggingCard = (card, event) => {
   
   // Check if dragging from drawer or tabletop
   // IMPORTANT: Check tabletop FIRST - a card can be in both drawer (as source) and tabletop (as instance)
-  const isFromTabletop = tabletopCards.value.some(c => c.id === card.id)
+  const isFromTabletop = tabletopCards.value.some(c => c.instanceId === card.instanceId)
   const isFromDrawer = !isFromTabletop && drawerCards.value.some(c => c.id === card.id)
   
   // Get element position for offset calculation
@@ -709,7 +709,7 @@ const handleVerbDrop = ({ card, verbId }) => {
   if (drawerIdx > -1) drawerCards.value.splice(drawerIdx, 1)
   
   const tableIdx = tabletopEntities.value.findIndex(c => c.instanceId === card.id)
-  if (tableIdx > -1) tabletopCards.value.splice(tableIdx, 1)
+  if (tableIdx > -1) tabletopEntities.value.splice(tableIdx, 1)
 
   // Remove from other slots if it was moved from slot to slot
   for (const [otherVerbId, slots] of Object.entries(slottedCards.value)) {
@@ -771,7 +771,7 @@ const handleVerbDropFromMouse = (card, verbInstanceId, fromDrawer = false) => {
   // If from drawer, DON'T remove - drawer is a resource library!
   if (!fromDrawer) {
     const tableIdx = tabletopEntities.value.findIndex(c => c.instanceId === card.id)
-    if (tableIdx > -1) tabletopCards.value.splice(tableIdx, 1)
+    if (tableIdx > -1) tabletopEntities.value.splice(tableIdx, 1)
   }
 
   // Remove from other slots if it was moved from slot to slot
