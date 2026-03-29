@@ -1014,7 +1014,7 @@ const igniteVerb = (verbInstanceId) => {
             :style="{ left: draggedItem.type === 'card' ? draggedItem.dragCard.x + 'px' : draggedItem.dragInstance.x + 'px', top: draggedItem.type === 'card' ? draggedItem.dragCard.y + 'px' : draggedItem.dragInstance.y + 'px' }"
           >
             <Card v-if="draggedItem.type === 'card'" :card="draggedItem.dragCard" />
-            <Verb v-if="draggedItem.type === 'verb-definition'" :verb="draggedItem.definition" />
+            <Verb v-if="draggedItem.type === 'verb-definition'" :verb="{ ...draggedItem.definition, ...draggedItem.dragInstance }" />
           </div>
         </div>
       </section>
