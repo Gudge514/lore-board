@@ -304,7 +304,7 @@ const onMouseMove = (event) => {
       draggedItem.value.dragCard.y = newY
     } else {
       // Tabletop drag: find and update the card in tabletopCards array for reactivity
-      const idx = tabletopEntities.value.findIndex(c => c.instanceId === draggedItem.value.originalCard.id)
+      const idx = tabletopEntities.value.findIndex(c => c.instanceId === draggedItem.value.originalCard.instanceId)
       if (idx > -1) {
         tabletopCards.value[idx].x = newX
         tabletopCards.value[idx].y = newY
@@ -427,7 +427,7 @@ const onMouseUp = (event) => {
             cleanupDrag()
           } else {
             // From tabletop: remove from tabletop (card returns to drawer)
-            const tableIdx = tabletopEntities.value.findIndex(c => c.instanceId === originalCard.id)
+            const tableIdx = tabletopEntities.value.findIndex(c => c.instanceId === originalCard.instanceId)
             if (tableIdx > -1) {
               tabletopEntities.value.splice(tableIdx, 1)
             }
@@ -443,7 +443,7 @@ const onMouseUp = (event) => {
         // Generate a unique ID for this instance
         const instanceCard = {
           ...originalCard,
-          id: `${originalCard.id}-inst-${Date.now()}`, // Unique instance ID
+          id: `${originalCard.instanceId}-inst-${Date.now()}`, // Unique instance ID
           x: dragCard.x,
           y: dragCard.y
         }
@@ -973,7 +973,7 @@ const igniteVerb = (verbInstanceId) => {
           
           <!-- Verbs as draggable elements on canvas -->
           <div 
-            v-for="instance in canvasVerbs" 
+            v-for="instance in tabletopVerbs" 
             :key="instance.instanceId" 
             :id="`verb-${instance.instanceId}`"
             class="absolute cursor-move"
@@ -998,12 +998,12 @@ const igniteVerb = (verbInstanceId) => {
           <!-- Cards on tabletop -->
           <div 
             v-for="card in tabletopCards" 
-            :key="card.id" 
+            :key="card.instanceId" 
             class="absolute w-48 cursor-move"
             :style="{ left: (card.x || 100) + 'px', top: (card.y || 100) + 'px' }"
             @mousedown.stop="startDraggingCard(card, $event)"
           >
-            <Card :card="card" :is-selected="selectedCardId === card.id" @select="onCardSelect" />
+            <Card :card="card" :is-selected="selectedCardId === card.instanceId" @select="onCardSelect" />
           </div>
           
           <!-- Drag card (temporary visual for drawer drag) -->
@@ -1082,12 +1082,12 @@ const igniteVerb = (verbInstanceId) => {
             <template v-if="drawerActiveTab !== 'verbs'">
               <div 
                 v-for="card in filteredDrawerCards" 
-                :key="card.id" 
+                :key="card.instanceId" 
                 class="w-48 shrink-0 transition-all cursor-grab active:cursor-grabbing"
-                :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && draggedItem.originalCard.id === card.id }"
+                :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && draggedItem.originalCard.instanceId === card.id }"
                 @mousedown.stop="startDraggingCard(card, $event)"
               >
-                <Card :card="card" :is-selected="selectedCardId === card.id" :compact="true" @select="onCardSelect" />
+                <Card :card="card" :is-selected="selectedCardId === card.instanceId" :compact="true" @select="onCardSelect" />
               </div>
               <div v-if="filteredDrawerCards.length === 0" class="h-32 w-full flex items-center justify-center text-zinc-600 text-sm italic">
                 {{ drawerSearchQuery ? 'No matching cards' : 'No cards in this category' }}
