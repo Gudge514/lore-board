@@ -551,6 +551,7 @@ const startDraggingVerb = (verb, event) => {
     // Dragging from drawer - create new instance on drop
     draggedItem.value = {
       type: 'verb-definition',
+      fromDrawer: true,
       definition: verb,
       dragInstance: {
         instanceId: `cv-${Date.now()}`,
@@ -1001,10 +1002,11 @@ const igniteVerb = (verbInstanceId) => {
           <!-- Drag card (temporary visual for drawer drag) -->
           <div 
             v-if="draggedItem && draggedItem.fromDrawer" 
-            class="absolute w-48 pointer-events-none opacity-70 z-50"
-            :style="{ left: draggedItem.dragCard.x + 'px', top: draggedItem.dragCard.y + 'px' }"
+            class="absolute pointer-events-none opacity-70 z-50"
+            :style="{ left: draggedItem.type === 'card' ? draggedItem.dragCard.x + 'px' : draggedItem.dragInstance.x + 'px', top: draggedItem.type === 'card' ? draggedItem.dragCard.y + 'px' : draggedItem.dragInstance.y + 'px' }"
           >
-            <Card :card="draggedItem.dragCard" />
+            <Card v-if="draggedItem.type === 'card'" :card="draggedItem.dragCard" />
+            <Verb v-if="draggedItem.type === 'verb-definition'" :verb="draggedItem.definition" />
           </div>
         </div>
       </section>
