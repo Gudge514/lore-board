@@ -358,15 +358,15 @@ const onMouseUp = (event) => {
         // Dropped in drawer
         if (draggedItem.value.type === 'verb-instance') {
           // Remove instance from canvas
-          const idx = tabletopVerbs.value.findIndex(cv => cv.instanceId === draggedItem.value.instance.instanceId)
+          const idx = tabletopEntities.value.findIndex(cv => cv.instanceId === draggedItem.value.instance.instanceId)
           if (idx > -1) {
             // Return slotted cards to tabletop
-            const instance = tabletopVerbs.value[idx]
+            const instance = tabletopEntities.value[idx]
             if (instance.slottedCards.length > 0) {
               // TODO: Convert slotted cards to entity format
         tabletopEntities.value.push(...instance.slottedCards)
             }
-            tabletopVerbs.value.splice(idx, 1)
+            tabletopEntities.value.splice(idx, 1)
           }
         }
         // If from definition, just discard
@@ -378,7 +378,7 @@ const onMouseUp = (event) => {
     // Dropped on canvas
     if (draggedItem.value.type === 'verb-definition') {
       // Create new instance on canvas
-      tabletopVerbs.value.push({ ...draggedItem.value.dragInstance })
+      tabletopEntities.value.push({ ...draggedItem.value.dragInstance })
     }
     // If verb-instance, position already updated by onMouseMove
     
