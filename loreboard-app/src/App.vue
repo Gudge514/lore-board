@@ -194,7 +194,7 @@ const handleKeyDown = (event) => {
   // Delete selected card
   if (selectedCardId.value) {
     // Try to remove from tabletop
-    const tableIdx = tabletopCards.value.findIndex(c => c.id === selectedCardId.value)
+    const tableIdx = tabletopEntities.value.findIndex(c => c.instanceId === selectedCardId.value)
     if (tableIdx > -1) {
       tabletopCards.value.splice(tableIdx, 1)
       selectedCardId.value = null
@@ -217,9 +217,10 @@ const handleKeyDown = (event) => {
       if (slotIdx > -1) {
         const removedCard = slots.splice(slotIdx, 1)[0]
         // Return card to tabletop
-        tabletopCards.value.push(removedCard)
+        // TODO: Convert removedCard to entity format
+        tabletopEntities.value.push(removedCard)
         // Set verb to IDLE if empty
-        const verb = verbs.value.find(v => v.id === verbId)
+        const verb = drawerVerbs.value.find(v => v.id === verbId)
         if (verb && slots.length === 0) {
           verb.state = 'IDLE'
         }
@@ -240,11 +241,12 @@ const handleKeyDown = (event) => {
         // Return any slotted card to tabletop
         const slotted = slottedCards.value[selectedVerbId.value]
         if (slotted && slotted.length > 0) {
-          tabletopCards.value.push(...slotted)
+          // TODO: Convert slotted cards to entity format
+        tabletopEntities.value.push(...slotted)
           slottedCards.value[selectedVerbId.value] = []
         }
         // Remove verb
-        verbs.value.splice(verbIdx, 1)
+        tabletopEntities.value.splice(verbIdx, 1)
         selectedVerbId.value = null
         console.log('Verb deleted from tabletop')
         return
@@ -302,7 +304,7 @@ const onMouseMove = (event) => {
       draggedItem.value.dragCard.y = newY
     } else {
       // Tabletop drag: find and update the card in tabletopCards array for reactivity
-      const idx = tabletopCards.value.findIndex(c => c.id === draggedItem.value.originalCard.id)
+      const idx = tabletopEntities.value.findIndex(c => c.instanceId === draggedItem.value.originalCard.id)
       if (idx > -1) {
         tabletopCards.value[idx].x = newX
         tabletopCards.value[idx].y = newY
@@ -360,7 +362,8 @@ const onMouseUp = (event) => {
             // Return slotted cards to tabletop
             const instance = tabletopVerbs.value[idx]
             if (instance.slottedCards.length > 0) {
-              tabletopCards.value.push(...instance.slottedCards)
+              // TODO: Convert slotted cards to entity format
+        tabletopEntities.value.push(...instance.slottedCards)
             }
             tabletopVerbs.value.splice(idx, 1)
           }
@@ -424,7 +427,7 @@ const onMouseUp = (event) => {
             cleanupDrag()
           } else {
             // From tabletop: remove from tabletop (card returns to drawer)
-            const tableIdx = tabletopCards.value.findIndex(c => c.id === originalCard.id)
+            const tableIdx = tabletopEntities.value.findIndex(c => c.instanceId === originalCard.id)
             if (tableIdx > -1) {
               tabletopCards.value.splice(tableIdx, 1)
             }
@@ -444,7 +447,7 @@ const onMouseUp = (event) => {
           x: dragCard.x,
           y: dragCard.y
         }
-        tabletopCards.value.push(instanceCard)
+        tabletopEntities.value.push(instanceCard)
         // Don't remove from drawer - it's a resource library!
       }
       // From tabletop: card is already on tabletop, position already updated by onMouseMove
@@ -676,21 +679,21 @@ const handleCanvasDrop = (e) => {
     const slotIdx = slots.findIndex(c => c.id === cardData.id)
     if (slotIdx > -1) {
       slots.splice(slotIdx, 1)
-      const verb = verbs.value.find(v => v.id === verbId)
+      const verb = drawerVerbs.value.find(v => v.id === verbId)
       if (slots.length === 0) verb.state = 'IDLE'
     }
   }
   
   // Add to tabletop if not already there
-  const tableIdx = tabletopCards.value.findIndex(c => c.id === cardData.id)
+  const tableIdx = tabletopEntities.value.findIndex(c => c.instanceId === cardData.id)
   if (tableIdx === -1) {
-    tabletopCards.value.push({ ...cardData, x: e.clientX - 200, y: e.clientY - 200 })
+    tabletopEntities.value.push({ ...cardData, x: e.clientX - 200, y: e.clientY - 200 })
   }
 }
 
 // Drag into a Verb Slot (from HTML5 Drop)
 const handleVerbDrop = ({ card, verbId }) => {
-  const verb = verbs.value.find(v => v.id === verbId)
+  const verb = drawerVerbs.value.find(v => v.id === verbId)
   
   if (verb.state === 'IGNITED') {
     console.warn('Verb is processing, cannot drop!')
@@ -705,7 +708,7 @@ const handleVerbDrop = ({ card, verbId }) => {
   const drawerIdx = drawerCards.value.findIndex(c => c.id === card.id)
   if (drawerIdx > -1) drawerCards.value.splice(drawerIdx, 1)
   
-  const tableIdx = tabletopCards.value.findIndex(c => c.id === card.id)
+  const tableIdx = tabletopEntities.value.findIndex(c => c.instanceId === card.id)
   if (tableIdx > -1) tabletopCards.value.splice(tableIdx, 1)
 
   // Remove from other slots if it was moved from slot to slot
@@ -714,7 +717,7 @@ const handleVerbDrop = ({ card, verbId }) => {
     const slotIdx = slots.findIndex(c => c.id === card.id)
     if (slotIdx > -1) {
       slots.splice(slotIdx, 1)
-      const otherVerb = verbs.value.find(v => v.id === otherVerbId)
+      const otherVerb = drawerVerbs.value.find(v => v.id === otherVerbId)
       if (slots.length === 0) otherVerb.state = 'IDLE'
     }
   }
@@ -722,7 +725,7 @@ const handleVerbDrop = ({ card, verbId }) => {
   // If slot is full (MVP: max 1), bounce the old card to tabletop
   if (slottedCards.value[verbId].length > 0) {
     const bouncedCard = slottedCards.value[verbId].pop()
-    tabletopCards.value.push(bouncedCard)
+    tabletopEntities.value.push(bouncedCard)
   }
 
   // Put in slot
@@ -730,13 +733,13 @@ const handleVerbDrop = ({ card, verbId }) => {
   verb.state = 'READY'
   
   // Ensure only one Verb is READY at a time
-  verbs.value.forEach(v => {
+  drawerVerbs.value.forEach(v => {
     if (v.id !== verbId && v.state === 'READY') {
       v.state = 'IDLE'
       // Clear the slot and return card to tabletop
       const clearedCard = slottedCards.value[v.id].pop()
       if (clearedCard) {
-        tabletopCards.value.push(clearedCard)
+        tabletopEntities.value.push(clearedCard)
       }
     }
   })
@@ -767,7 +770,7 @@ const handleVerbDropFromMouse = (card, verbInstanceId, fromDrawer = false) => {
   // Remove from source arrays
   // If from drawer, DON'T remove - drawer is a resource library!
   if (!fromDrawer) {
-    const tableIdx = tabletopCards.value.findIndex(c => c.id === card.id)
+    const tableIdx = tabletopEntities.value.findIndex(c => c.instanceId === card.id)
     if (tableIdx > -1) tabletopCards.value.splice(tableIdx, 1)
   }
 
@@ -784,7 +787,7 @@ const handleVerbDropFromMouse = (card, verbInstanceId, fromDrawer = false) => {
   // If slot is full (MVP: max 1), bounce the old card to tabletop
   if (verbInstance.slottedCards.length > 0) {
     const bouncedCard = verbInstance.slottedCards.pop()
-    tabletopCards.value.push(bouncedCard)
+    tabletopEntities.value.push(bouncedCard)
   }
 
   // Put in slot - create a new instance with unique ID
@@ -802,7 +805,7 @@ const handleVerbDropFromMouse = (card, verbInstanceId, fromDrawer = false) => {
       // Clear the slot and return card to tabletop
       const clearedCard = v.slottedCards.pop()
       if (clearedCard) {
-        tabletopCards.value.push(clearedCard)
+        tabletopEntities.value.push(clearedCard)
       }
     }
   })
