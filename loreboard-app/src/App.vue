@@ -466,6 +466,7 @@ const cleanupDrag = () => {
   }
 
 const startDraggingCard = (card, event) => {
+    console.log('Dragging card:', card.id, card.label, card);
   // Prevent multiple drag handlers
   if (draggedItem.value) return
   
