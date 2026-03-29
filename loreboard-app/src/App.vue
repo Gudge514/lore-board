@@ -1000,7 +1000,7 @@ const igniteVerb = (verbInstanceId) => {
           <!-- Cards on tabletop -->
           <div 
             v-for="card in tabletopCards" 
-            :key="card.id" 
+            :key="card.instanceId" 
             class="absolute w-48 cursor-move"
             :style="{ left: (card.x || 100) + 'px', top: (card.y || 100) + 'px' }"
             @mousedown.stop="startDraggingCard(card, $event)"
@@ -1084,7 +1084,7 @@ const igniteVerb = (verbInstanceId) => {
             <template v-if="drawerActiveTab !== 'verbs'">
               <div 
                 v-for="card in filteredDrawerCards" 
-                :key="card.id" 
+                :key="card.instanceId" 
                 class="w-48 shrink-0 transition-all cursor-grab active:cursor-grabbing"
                 :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && (draggedItem.originalCard.instanceId === card.instanceId || draggedItem.originalCard.id === card.id) }"
                 @mousedown.stop="startDraggingCard(card, $event)"
