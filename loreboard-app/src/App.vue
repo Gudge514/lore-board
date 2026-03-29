@@ -306,8 +306,8 @@ const onMouseMove = (event) => {
       // Tabletop drag: find and update the card in tabletopCards array for reactivity
       const idx = tabletopEntities.value.findIndex(c => c.instanceId === draggedItem.value.originalCard.instanceId)
       if (idx > -1) {
-        tabletopCards.value[idx].x = newX
-        tabletopCards.value[idx].y = newY
+        tabletopEntities.value[idx].x = newX
+        tabletopEntities.value[idx].y = newY
       }
     }
   } else if (draggedItem.value.type === 'verb-instance') {
@@ -315,8 +315,8 @@ const onMouseMove = (event) => {
     const instance = draggedItem.value.instance
     const idx = tabletopVerbs.value.findIndex(cv => cv.instanceId === instance.instanceId)
     if (idx > -1) {
-      tabletopVerbs.value[idx].x = mouseX - draggedItem.value.offsetX
-      tabletopVerbs.value[idx].y = mouseY - draggedItem.value.offsetY
+      tabletopEntities.value[idx].x = mouseX - draggedItem.value.offsetX
+      tabletopEntities.value[idx].y = mouseY - draggedItem.value.offsetY
     }
   } else if (draggedItem.value.type === 'verb-definition') {
     // Dragging from drawer: update temp drag instance position
