@@ -1005,7 +1005,7 @@ const igniteVerb = (verbInstanceId) => {
             :style="{ left: (card.x || 100) + 'px', top: (card.y || 100) + 'px' }"
             @mousedown.stop="startDraggingCard(card, $event)"
           >
-            <Card :card="card" :is-selected="selectedCardId === card.instanceId" @select="onCardSelect" />
+            <Card :card="card" :is-selected="selectedCardId === card.id" @select="onCardSelect" />
           </div>
           
           <!-- Drag card (temporary visual for drawer drag) -->
@@ -1089,7 +1089,7 @@ const igniteVerb = (verbInstanceId) => {
                 :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && (draggedItem.originalCard.instanceId === card.instanceId || draggedItem.originalCard.id === card.id) }"
                 @mousedown.stop="startDraggingCard(card, $event)"
               >
-                <Card :card="card" :is-selected="selectedCardId === card.instanceId" :compact="true" @select="onCardSelect" />
+                <Card :card="card" :is-selected="selectedCardId === card.id" :compact="true" @select="onCardSelect" />
               </div>
               <div v-if="filteredDrawerCards.length === 0" class="h-32 w-full flex items-center justify-center text-zinc-600 text-sm italic">
                 {{ drawerSearchQuery ? 'No matching cards' : 'No cards in this category' }}
