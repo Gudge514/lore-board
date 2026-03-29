@@ -1,46 +1,30 @@
-# LoreBoard - AI Agent Control UI
+# LoreBoard Root
 
-> A tabletop-style control interface for AI agent orchestration.
+# Dependencies
+node_modules/
 
-## Quick Start
+# Build output
+dist/
 
-```bash
-cd loreboard-app
-npm install
-npm run dev
-```
+# IDE
+.vscode/
+.idea/
 
-## Project Structure
+# OS
+.DS_Store
+Thumbs.db
 
-```
-lore-board/
-├── loreboard-app/     # Vue 3 + Vite application
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Card.vue      # Resource card component
-│   │   │   └── Verb.vue      # Action verb component
-│   │   ├── App.vue           # Main tabletop canvas
-│   │   └── main.js
-│   ├── package.json
-│   └── vite.config.js
-├── types/              # Type definitions
-├── core-mechanics.md   # Game mechanics documentation
-├── README.md
-└── TESTING_REQUIREMENTS.md
-```
+# Logs
+*.log
+npm-debug.log*
 
-## Core Concepts
+# Local config
+*.local
+.env.local
 
-- **Drawer**: Resource library (infinite templates)
-- **Tabletop**: Working area (card instances)
-- **Verbs**: Action slots (study, work, explore)
+# loreboard-app specific (handled by its own .gitignore)
+loreboard-app/node_modules/
+loreboard-app/dist/
 
-## Tech Stack
-
-- Vue 3 (Composition API)
-- Vite 7
-- Tailwind CSS v4
-
-## License
-
-MIT
+# Old backups
+node_modules_old/
