@@ -466,6 +466,9 @@ const cleanupDrag = () => {
   }
 
 const startDraggingCard = (card, event) => {
+    console.log('DEBUG: Card object passed to startDraggingCard:', card);
+    console.log('DEBUG: card.id:', card.id, 'card.instanceId:', card.instanceId);
+    // Prevent multiple drag handlers
     console.log('Dragging card:', card.id, card.label, card);
   // Prevent multiple drag handlers
   if (draggedItem.value) return
@@ -1086,7 +1089,7 @@ const igniteVerb = (verbInstanceId) => {
                 v-for="card in filteredDrawerCards" 
                 :key="card.instanceId" 
                 class="w-48 shrink-0 transition-all cursor-grab active:cursor-grabbing"
-                :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && (draggedItem.originalCard.instanceId === card.instanceId || draggedItem.originalCard.id === card.id) }"
+                :class="{ 'opacity-50': draggedItem && draggedItem.fromDrawer && draggedItem.originalCard && (draggedItem.originalCard.instanceId === card.instanceId || draggedItem.originalCard.id === card.id) }"
                 @mousedown.stop="startDraggingCard(card, $event)"
               >
                 <Card :card="card" :is-selected="selectedCardId === card.id" :compact="true" @select="onCardSelect" />
