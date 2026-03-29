@@ -21,10 +21,10 @@ const handleClick = (e) => {
 
 // Color mapping based on card type - Black & Orange theme with 80% opacity backgrounds
 const typeColors = {
-  dynamic: 'border-orange-400/50 bg-orange-900/12 shadow-orange-900/30',
-  static: 'border-zinc-600/50 bg-zinc-800/12 shadow-zinc-900/40',
-  secret: 'border-amber-500/50 bg-amber-900/12 shadow-amber-900/30',
-  nemesis: 'border-red-500/50 bg-red-900/12 shadow-red-900/30'
+  dynamic: 'border-orange-400/50 bg-orange-50/80 shadow-orange-900/20',
+  static: 'border-zinc-500/50 bg-zinc-100/80 shadow-zinc-900/20',
+  secret: 'border-amber-500/50 bg-amber-50/80 shadow-amber-900/20',
+  nemesis: 'border-red-500/50 bg-red-50/80 shadow-red-900/20'
 }
 
 const colorClass = computed(() => typeColors[props.card.type] || typeColors.static)
