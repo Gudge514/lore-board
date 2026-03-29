@@ -979,7 +979,7 @@ const igniteVerb = (verbInstanceId) => {
             <Verb 
               :verb="getCanvasVerb(instance)" 
               :slottedCards="instance.slottedCards"
-              :is-highlighted="highlightedVerbs.has(instance.definitionId)"
+              :is-highlighted="highlightedVerbs.has(instance.instanceId)"
               :is-selected="selectedVerbId === instance.instanceId"
               @drop="handleVerbDrop"
               @ignite="igniteVerb"
