@@ -453,7 +453,7 @@ const onMouseUp = (event) => {
 const cleanupDrag = () => {
   draggedItem.value = null
   highlightedVerbs.value = new Set()
-  window.removeEventListener('mousemove', onMouseMove)
+  window.removeEventListener('mousemove', onDrawerResizeMove)
   window.removeEventListener('mouseup', onMouseUp)
 }
 
@@ -642,17 +642,17 @@ const startResizingDrawer = (e) => {
   const startY = e.clientY
   const startH = drawerHeight.value
   
-  const onMouseMove = (moveE) => {
-    drawerHeight.value = Math.max(100, Math.min(500, startH - (moveE.clientY - startY)))
+  const onDrawerResizeMove = (moveE) => {
+      drawerHeight.value = Math.max(100, Math.min(500, startH - (moveE.clientY - startY)))
   }
   
   const onMouseUp = () => {
-    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mousemove', onDrawerResizeMove)
     window.removeEventListener('mouseup', onMouseUp)
   }
   
-  window.addEventListener('mousemove', onMouseMove)
-  window.addEventListener('mouseup', onMouseUp)
+  window.addEventListener('mousemove', onDrawerResizeMove)
+      window.addEventListener('mouseup', onMouseUp)
 }
 
 // Drag onto Tabletop Canvas
